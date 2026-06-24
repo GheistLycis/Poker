@@ -1,0 +1,14 @@
+.card-push {
+  animation: card-push 0.2s ease-out;
+}
+
+@keyframes card-push {
+  from {
+    opacity: 0;
+    transform: translate(20px, -50px) scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

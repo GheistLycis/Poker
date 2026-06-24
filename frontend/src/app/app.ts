@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { CardsHand } from './components/cards-hand/cards-hand';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [CardsHand],
   templateUrl: './app.html',
 })
 export class App {
