@@ -1,8 +1,8 @@
-.card-push {
-  animation: card-push 0.2s ease-out;
+.push-card {
+  animation: push-card 0.2s ease-out;
 }
 
-@keyframes card-push {
+@keyframes push-card {
   from {
     opacity: 0;
     transform: translate(20px, -50px) scale(0.75);

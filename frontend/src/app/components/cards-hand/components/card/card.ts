@@ -1,13 +1,18 @@
-import { NgOptimizedImage } from '@angular/common';
+import { NgClass, NgOptimizedImage } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
-import { CardEnum, Card as CardType } from './types/Card';
+import { CardEnum, Card as CardType } from '@app-types/Card';
+import { CardOwner, CardOwnerEnum } from '@app-types/CardOwner';
 
 @Component({
   selector: 'app-card',
-  imports: [NgOptimizedImage],
+  imports: [NgOptimizedImage, NgClass],
   templateUrl: './card.html',
 })
 export class Card {
-  variant = input<CardType>(CardEnum.BACK);
-  fileType = computed<string>(() => (this.variant() == CardEnum.BACK ? '.png' : '.svg'));
+  CARD_OWNER_ENUM = CardOwnerEnum;
+
+  variant = input.required<CardType>();
+  owner = input.required<CardOwner>();
+
+  cardImgFileType = computed(() => (this.variant() == CardEnum.BACK ? '.png' : '.svg'));
 }

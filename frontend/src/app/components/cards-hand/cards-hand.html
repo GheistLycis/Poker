@@ -1,5 +1,12 @@
 <div class="w-full flex gap-2 justify-center">
-  @for (card of cards | async; track card) {
-    <app-card [variant]="card" animate.enter="card-push" />
+  <p class="font-bold text-lg">{{ seat() }}</p>
+  @if (hand$ | async; as hand) {
+    @for (card of hand; track $index) {
+      <app-card
+        [variant]="card ?? CARD_ENUM.BACK"
+        [owner]="seat() == 0 ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
+        animate.enter="push-card"
+      />
+    }
   }
 </div>

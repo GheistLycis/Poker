@@ -1,3 +1,17 @@
-<div class="w-full absolute bottom-0 h-40">
-  <app-cards-hand />
+<div class="h-svh relative">
+  @if (opponents$ | async; as opponents) {
+    @for (opponent of opponents; track opponent.seat) {
+      <div class="absolute -translate-1/2" [style.left]="opponent.left" [style.top]="opponent.top">
+        <app-cards-hand [seat]="opponent.seat" />
+      </div>
+    }
+  } @else {
+    <div class="w-full absolute top-0 h-40">
+      <mat-progress-spinner />
+    </div>
+  }
+
+  <div class="w-full absolute bottom-0 h-40">
+    <app-cards-hand [seat]="0" />
+  </div>
 </div>
