@@ -2,9 +2,9 @@ import { Card } from '@app-types/Card';
 import { Player } from './Player';
 
 export class User extends Player {
-  cards: Card[];
+  cards: [Card, Card];
 
-  constructor(id: string, name: string, score: number, cards: Card[]) {
+  constructor(id: string, name: string, score: number, cards: [Card, Card]) {
     super(id, name, score);
     this.cards = cards;
   }

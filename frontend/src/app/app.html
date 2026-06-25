@@ -1,4 +1,4 @@
-<div class="h-svh relative">
+<div class="h-[98svh] relative">
   @if (opponents$ | async; as opponents) {
     @for (opponent of opponents; track opponent.seat) {
       <div class="absolute -translate-1/2" [style.left]="opponent.left" [style.top]="opponent.top">

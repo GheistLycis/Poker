@@ -5,13 +5,7 @@ import { USER } from '@services/user/consts';
 const SEATS_NUMBER = faker.number.int({ min: 2, max: 8 });
 
 export const OPPONENTS = Array.from({ length: SEATS_NUMBER - 1 }).map(
-  () =>
-    new Opponent(
-      faker.string.uuid(),
-      faker.person.fullName(),
-      faker.number.int(0),
-      faker.number.int({ min: 0, max: 5 }),
-    ),
+  () => new Opponent(faker.string.uuid(), faker.person.fullName(), faker.number.int(0)),
 );
 
 export const PUSH_CARD_TO_HAND_DELAY_MS = 200;

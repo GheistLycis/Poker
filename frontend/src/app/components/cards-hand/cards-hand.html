@@ -1,4 +1,4 @@
-<div class="w-full flex gap-2 justify-center">
+<div class="flex gap-2 justify-center min-w-fit min-h-fit">
   <p class="font-bold text-lg">{{ seat() }}</p>
   @if (hand$ | async; as hand) {
     @for (card of hand; track $index) {

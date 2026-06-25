@@ -5,7 +5,7 @@ import { CardEnum, Card as CardType } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
-import { combineLatest, interval, map, Observable, startWith, switchMap, takeWhile } from 'rxjs';
+import { combineLatest, interval, map, startWith, switchMap, takeWhile } from 'rxjs';
 import { Card } from './components/card/card';
 
 @Component({
@@ -23,27 +23,13 @@ export class CardsHand {
 
   seat = input.required<number>();
 
-  hand$: Observable<(CardType | null)[]> = combineLatest([
-    this.userService.user$,
-    this.matchService.opponents$,
-    this.matchService.seats$,
-    toObservable(this.seat),
-  ]).pipe(
-    map(([user, opponents, seats, seat]) => {
-      if (seat == 0) return user.cards;
-
-      const opponent = opponents.find((opponent) => opponent.id == seats[seat]);
-
-      if (!opponent) return [];
-
-      return Array.from({ length: opponent.handSize }).fill(null) as null[];
-    }),
+  hand$ = combineLatest([this.userService.user$, toObservable(this.seat)]).pipe(
+    map(([user, seat]) => (seat == 0 ? user.cards : [null, null])),
     switchMap((fullHand) =>
       interval(200).pipe(
         startWith(0),
-        map((_, tick) => tick + 1),
-        takeWhile((cardCount) => cardCount < fullHand.length, true),
-        map((cardCount) => fullHand.slice(0, cardCount)),
+        takeWhile((cardCount) => cardCount < 2, true),
+        map((cardCount) => fullHand.slice(0, cardCount) as [CardType, CardType] | [null, null]),
       ),
     ),
   );
