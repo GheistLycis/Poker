@@ -1,9 +1,10 @@
 <img
-  [ngSrc]="'cards/' + variant() + cardImgFileType()"
   priority
-  [width]="owner() == CARD_OWNER_ENUM.OPPONENT ? 60 : 120"
-  [height]="owner() == CARD_OWNER_ENUM.OPPONENT ? 120 : 240"
+  [alt]="variant()"
+  [ngSrc]="'cards/' + variant() + cardImgFileType()"
+  [width]="owner() === CARD_OWNER_ENUM.OPPONENT ? 60 : 120"
+  [height]="owner() === CARD_OWNER_ENUM.OPPONENT ? 120 : 240"
   [ngClass]="{
-    'hover:-translate-y-2 duration-300 ease-out hover:opacity-80': owner() == CARD_OWNER_ENUM.USER,
+    'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': owner() === CARD_OWNER_ENUM.USER,
   }"
 />

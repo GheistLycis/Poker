@@ -24,7 +24,8 @@ export class CardsHand {
   seat = input.required<number>();
 
   hand$ = combineLatest([this.userService.user$, toObservable(this.seat)]).pipe(
-    map(([user, seat]) => (seat == 0 ? user.cards : [null, null])),
+    map(([user, seat]) => (seat === 0 ? user.cards : [null, null])),
+    // PUSH CARD TO HAND EFFECT
     switchMap((fullHand) =>
       interval(200).pipe(
         startWith(0),

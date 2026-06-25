@@ -1,11 +1,10 @@
-<div class="flex gap-2 justify-center min-w-fit min-h-fit">
-  <p class="font-bold text-lg">{{ seat() }}</p>
+<div class="flex justify-center gap-2">
   @if (hand$ | async; as hand) {
     @for (card of hand; track $index) {
       <app-card
-        [variant]="card ?? CARD_ENUM.BACK"
-        [owner]="seat() == 0 ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
         animate.enter="push-card"
+        [variant]="card ?? CARD_ENUM.BACK"
+        [owner]="seat() === 0 ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
       />
     }
   }

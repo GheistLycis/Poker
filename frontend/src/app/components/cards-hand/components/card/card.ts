@@ -14,5 +14,5 @@ export class Card {
   variant = input.required<CardType>();
   owner = input.required<CardOwner>();
 
-  cardImgFileType = computed(() => (this.variant() == CardEnum.BACK ? '.png' : '.svg'));
+  cardImgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
 }
