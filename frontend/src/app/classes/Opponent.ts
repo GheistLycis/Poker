@@ -1,10 +1,15 @@
 import { Card } from '@app-types/Card';
-import { Player } from './Player';
+import { CreatePlayer, Player } from './Player';
+
+interface CreateOpponent extends CreatePlayer {
+  cards?: [Card, Card] | [null, null];
+}
 
 export class Opponent extends Player {
-  cards: [null, null] | [Card, Card] = [null, null];
+  cards: [Card, Card] | [null, null];
 
-  constructor(id: string, name: string, score: number) {
-    super(id, name, score);
+  constructor({ cards = [null, null], ...args }: CreateOpponent) {
+    super(args);
+    this.cards = cards;
   }
 }

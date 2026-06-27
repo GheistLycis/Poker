@@ -1,11 +1,17 @@
+export interface CreatePlayer {
+  id: string;
+  name: string;
+  score: number;
+}
+
 export class Player {
   id: string;
   name: string;
   score: number;
 
-  constructor(id: string, name: string, score: number) {
-    this.id = id;
-    this.name = name;
-    this.score = score;
+  constructor(args: CreatePlayer) {
+    this.id = args.id;
+    this.name = args.name;
+    this.score = args.score;
   }
 }

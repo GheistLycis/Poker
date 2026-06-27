@@ -5,10 +5,10 @@
 @keyframes push-card {
   from {
     opacity: 0;
-    transform: translate(20px, -50px) scale(0.75);
+    transform: translate(100px, -40px) scale(0.75);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(0) scale(1);
   }
 }

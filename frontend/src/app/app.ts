@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Opponent } from '@components/opponent/opponent';
+import { Table } from '@components/table/table';
 import { User } from '@components/user/user';
 import { MatchService } from '@services/match/match';
 import { map } from 'rxjs';
@@ -14,7 +15,7 @@ interface OpponentSeat {
 
 @Component({
   selector: 'app-root',
-  imports: [Opponent, AsyncPipe, MatProgressSpinnerModule, User],
+  imports: [Opponent, AsyncPipe, MatProgressSpinnerModule, User, Table],
   templateUrl: './app.html',
 })
 export class App {

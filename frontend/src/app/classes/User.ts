@@ -1,11 +1,15 @@
 import { Card } from '@app-types/Card';
-import { Player } from './Player';
+import { CreatePlayer, Player } from './Player';
+
+export interface CreateUser extends CreatePlayer {
+  cards: [Card, Card];
+}
 
 export class User extends Player {
   cards: [Card, Card];
 
-  constructor(id: string, name: string, score: number, cards: [Card, Card]) {
-    super(id, name, score);
-    this.cards = cards;
+  constructor(args: CreateUser) {
+    super(args);
+    this.cards = args.cards;
   }
 }
