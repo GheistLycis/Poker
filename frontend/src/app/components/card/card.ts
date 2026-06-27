@@ -9,12 +9,11 @@ import { CardOwner, CardOwnerEnum } from '@app-types/CardOwner';
   templateUrl: './card.html',
 })
 export class Card {
-  CARD_ENUM = CardEnum;
-
   variant = input.required<CardType>();
   owner = input.required<CardOwner>();
   class = input('');
 
   cardImgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
   isOpponent = computed(() => this.owner() === CardOwnerEnum.OPPONENT);
+  isCardBack = computed(() => this.variant() === CardEnum.BACK);
 }

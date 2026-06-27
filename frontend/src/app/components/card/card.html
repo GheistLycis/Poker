@@ -5,7 +5,7 @@
   [width]="isOpponent() ? 70 : 120"
   [height]="isOpponent() ? 140 : 240"
   [ngClass]="{
-    'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': variant() !== CARD_ENUM.BACK,
+    'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': !isCardBack(),
   }"
   [class]="class()"
 />
