@@ -1,8 +1,8 @@
 import { Service } from '@angular/core';
-import { of } from 'rxjs';
+import { of, shareReplay } from 'rxjs';
 import { USER } from './consts';
 
 @Service()
 export class UserService {
-  user$ = of(USER);
+  user$ = of(USER).pipe(shareReplay());
 }

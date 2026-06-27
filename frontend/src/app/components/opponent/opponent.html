@@ -6,7 +6,7 @@
     >
       {{ opponent.name }}
     </p>
-    <app-cards-hand [seat]="seat()" />
+    <app-cards-hand [player]="opponent" />
     <p>{{ opponent.score | currency }}</p>
   }
 </div>
