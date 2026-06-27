@@ -1,6 +1,6 @@
 <div class="w-full px-[25%] text-lg font-semibold">
   <div class="flex w-full items-end justify-center gap-4">
-    @if (isUserTurn()) {
+    @if (isUserTurn$ | async) {
       <button matButton>Check</button>
       <button matButton>Bet</button>
       <button matButton>Call</button>

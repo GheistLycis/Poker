@@ -1,10 +1,9 @@
 import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { CardsHand } from '@components/cards-hand/cards-hand';
+import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
-import { interval, scan } from 'rxjs';
 
 @Component({
   selector: 'app-user',
@@ -13,6 +12,7 @@ import { interval, scan } from 'rxjs';
 })
 export class User {
   userService = inject(UserService);
+  matchService = inject(MatchService);
 
-  isUserTurn = toSignal(interval(2000).pipe(scan((prev) => !prev, false)), { initialValue: false });
+  isUserTurn$ = this.matchService.isPlayerTurn(0);
 }
