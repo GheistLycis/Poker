@@ -1,5 +1,6 @@
 import { inject, Service } from '@angular/core';
 import { Card, CardEnum } from '@app-types/Card';
+import { PlayerAction } from '@app-types/PlayerAction';
 import { Opponent } from '@classes/Opponent';
 import { faker } from '@faker-js/faker';
 import { UserService } from '@services/user/user';
@@ -28,18 +29,9 @@ export class MatchService {
     interval(2000)
       .pipe(
         takeWhile(() => this.revealedCards$.value.length < 5),
-        tap(() => {
-          const newCard = faker.helpers.enumValue(CardEnum);
-          const current = this.revealedCards$.value;
-
-          this.revealedCards$.next([...current, newCard]);
-        }),
+        tap(() => this.revealTableCards()),
       )
       .subscribe();
-  }
-
-  isPlayerTurn(playerSeat: number) {
-    return this.seatTurn$.pipe(map((seatTurn) => seatTurn === playerSeat));
   }
 
   private revealOpponentsCards() {
@@ -54,4 +46,17 @@ export class MatchService {
 
     this.opponents$.next(updatedOpponents);
   }
+
+  private revealTableCards() {
+    const newCard = faker.helpers.enumValue(CardEnum);
+    const current = this.revealedCards$.value;
+
+    this.revealedCards$.next([...current, newCard]);
+  }
+
+  isPlayerTurn(playerSeat: number) {
+    return this.seatTurn$.pipe(map((seatTurn) => seatTurn === playerSeat));
+  }
+
+  registerUserAction(_action: PlayerAction) {}
 }
