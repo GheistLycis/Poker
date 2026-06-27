@@ -2,7 +2,7 @@
   @if (cards$ | async; as cards) {
     @for (card of cards; track $index) {
       <app-card
-        animate.enter="push-card"
+        animate.enter="drop-in"
         [variant]="card ?? CARD_ENUM.BACK"
         [owner]="isUser() ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
       />

@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { CardEnum } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
-import { Card } from '@components/cards-hand/components/card/card';
+import { Card } from '@components/card/card';
 import { MatchService } from '@services/match/match';
 import { map } from 'rxjs';
 
@@ -10,7 +10,6 @@ import { map } from 'rxjs';
   selector: 'app-table',
   imports: [Card, AsyncPipe],
   templateUrl: './table.html',
-  styleUrl: './table.css',
 })
 export class Table {
   CARD_ENUM = CardEnum;

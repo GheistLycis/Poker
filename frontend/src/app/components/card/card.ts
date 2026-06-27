@@ -9,6 +9,7 @@ import { CardOwner, CardOwnerEnum } from '@app-types/CardOwner';
   templateUrl: './card.html',
 })
 export class Card {
+  CARD_ENUM = CardEnum;
   CARD_OWNER_ENUM = CardOwnerEnum;
 
   variant = input.required<CardType>();

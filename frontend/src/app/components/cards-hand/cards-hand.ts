@@ -8,13 +8,12 @@ import { User } from '@classes/User';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
 import { interval, map, switchMap, takeWhile } from 'rxjs';
-import { Card } from './components/card/card';
+import { Card } from '../card/card';
 
 @Component({
   selector: 'app-cards-hand',
   imports: [Card, AsyncPipe],
   templateUrl: './cards-hand.html',
-  styleUrl: './cards-hand.css',
 })
 export class CardsHand {
   CARD_ENUM = CardEnum;

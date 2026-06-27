@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '@angular/material/prebuilt-themes/magenta-violet.css';
+@import './app/styles/animations.css';
 
 html {
   background-color: black;
