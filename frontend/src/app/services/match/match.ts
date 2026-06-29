@@ -3,6 +3,7 @@ import { Card, CardEnum } from '@app-types/Card';
 import { PlayerAction } from '@app-types/PlayerAction';
 import { Opponent } from '@classes/Opponent';
 import { faker } from '@faker-js/faker';
+import { ApiService } from '@services/api/api';
 import { UserService } from '@services/user/user';
 import { BehaviorSubject, interval, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
@@ -10,6 +11,7 @@ import { OPPONENTS, SEATS } from './consts';
 
 @Service()
 export class MatchService {
+  apiService = inject(ApiService);
   userService = inject(UserService);
 
   seats$ = of<Record<number, string | null>>(SEATS).pipe(shareReplay());

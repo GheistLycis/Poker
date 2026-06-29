@@ -18,6 +18,7 @@
       "@app-types/*": ["./src/app/types/*"],
       "@classes/*": ["./src/app/classes/*"],
       "@components/*": ["./src/app/components/*"],
+      "@env": ["./src/environments/environment"],
       "@services/*": ["./src/app/services/*"]
     }
   },
