@@ -1,0 +1,22 @@
+import { PlayerAction } from '@app-types/PlayerAction';
+import { WebSocketIncomingMessage } from '@services/api/types/WebSocketIncomingMessage';
+
+export interface ReceiveOpponentAction extends WebSocketIncomingMessage {
+  type: 'opponents.action';
+  payload: PurePayload | AmountPayload;
+}
+
+interface Payload {
+  player: string;
+  action: PlayerAction;
+}
+
+interface PurePayload extends Payload {
+  action: 'CHECK' | 'CALL' | 'FOLD';
+  amount?: undefined;
+}
+
+interface AmountPayload extends Payload {
+  action: 'BET' | 'RAISE';
+  amount: number;
+}

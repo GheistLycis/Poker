@@ -1,34 +1,37 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Service } from '@angular/core';
+import { Service, signal } from '@angular/core';
 import { environment } from '@env';
+import { ConnMessage, InConnMessage, OutConnMessage } from '@services/match/types/ConnMessage';
+import { filter, Observable, retry, shareReplay, timer } from 'rxjs';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { WebSocketConnState, WebSocketConnStateEnum } from './types/ConnState';
 
 @Service()
 export class ApiService {
-  API_URL = environment.apiUrl;
+  private API_URL = environment.apiUrl;
 
-  http = inject(HttpClient);
+  private connection$: WebSocketSubject<ConnMessage>;
+  receivedMessages$: Observable<InConnMessage>;
+  connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CLOSE);
 
-  private queryMaker(query?: object): string {
-    if (!query) return '';
-
-    return (
-      '&' +
-      Object.entries(query)
-        .filter(([, val]) => {
-          if (Array.isArray(val)) return !!val.length;
-          if (val === 0) return true;
-          else return !!val;
-        })
-        .map(([key, val]) => key + '=' + val)
-        .join('&')
+  constructor() {
+    this.connState.set(WebSocketConnStateEnum.CONNECTING);
+    this.connection$ = webSocket<ConnMessage>({
+      url: this.API_URL,
+      openObserver: { next: () => this.connState.set(WebSocketConnStateEnum.OPEN) },
+      closeObserver: { next: () => this.connState.set(WebSocketConnStateEnum.CLOSE) },
+    });
+    this.receivedMessages$ = this.connection$.pipe(
+      retry({ delay: (_, count) => timer(Math.min(1000 * 2 ** count, 30_000)) }),
+      filter((msg) => msg.origin === 'SERVER'),
+      shareReplay(),
     );
   }
 
-  get<T>(endpoint: string, id: string, extras?: object) {
-    return this.http.get<T>(`${this.API_URL}/${endpoint}/${id}?${this.queryMaker(extras)}`);
+  send(msg: OutConnMessage): void {
+    this.connection$.next(msg);
   }
 
-  list<T>(endpoint: string, extras?: object) {
-    return this.http.get<T[]>(`${this.API_URL}/${endpoint}?${this.queryMaker(extras)}`);
+  close(): void {
+    this.connection$.complete();
   }
 }
