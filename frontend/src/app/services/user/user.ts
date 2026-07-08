@@ -1,8 +1,9 @@
-import { Service } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { USER } from './consts';
+import { inject, Service } from '@angular/core';
+import { ApiService } from '@services/api/api';
 
 @Service()
 export class UserService {
-  user$ = new BehaviorSubject(USER);
+  private apiService = inject(ApiService);
+
+  user$ = this.apiService.getMessages('user.info');
 }
