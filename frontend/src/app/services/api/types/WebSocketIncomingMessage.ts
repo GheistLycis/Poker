@@ -1,3 +1,5 @@
 import { WebSocketMessage } from './WebSocketMessage';
 
-export type WebSocketIncomingMessage = WebSocketMessage<'match' | 'opponents' | 'user'>;
+export interface WebSocketIncomingMessage extends WebSocketMessage<'match' | 'opponents' | 'user'> {
+  origin: 'SERVER';
+}

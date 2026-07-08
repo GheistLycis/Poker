@@ -1,19 +1,38 @@
 import { inject, Service } from '@angular/core';
-import { Card, CardEnum } from '@app-types/Card';
-import { PlayerAction } from '@app-types/PlayerAction';
+import { CardEnum } from '@app-types/Card';
+import { PlayerAction, PlayerActionEnum } from '@app-types/PlayerAction';
 import { Opponent } from '@classes/Opponent';
 import { faker } from '@faker-js/faker';
 import { ApiService } from '@services/api/api';
-import { BehaviorSubject, interval, map, of, shareReplay, switchMap, tap } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
-import { OPPONENTS, SEATS } from './consts';
+import { WebSocketConnStateEnum } from '@services/api/types/ConnState';
+import { filter, interval, map, merge, of, scan, shareReplay, switchMap } from 'rxjs';
+import { SEATS } from './consts';
+import { InConnMessage } from './types/ConnMessage';
 
 @Service()
 export class MatchService {
   private apiService = inject(ApiService);
 
   seats$ = of<Record<number, string | null>>(SEATS).pipe(shareReplay());
-  opponents$ = new BehaviorSubject(OPPONENTS);
+  opponents$ = merge(
+    this.getMessages('opponents.info').pipe(map((msg) => (): Opponent[] => msg.payload)),
+    this.getMessages('opponents.reveal-hands').pipe(
+      map(
+        (msg) =>
+          (opponents: Opponent[]): Opponent[] =>
+            opponents.map(
+              (opponent) =>
+                new Opponent({
+                  ...opponent,
+                  cards: [faker.helpers.enumValue(CardEnum), faker.helpers.enumValue(CardEnum)],
+                }),
+            ),
+      ),
+    ),
+  ).pipe(
+    scan((opponents, reduce) => reduce(opponents), [] as Opponent[]),
+    shareReplay(),
+  );
   seatTurn$ = this.seats$.pipe(
     map((seats) =>
       Object.entries(seats)
@@ -23,40 +42,34 @@ export class MatchService {
     switchMap((seats) => interval(2000).pipe(map(() => faker.helpers.arrayElement(seats)))),
     shareReplay(),
   );
-  revealedCards$ = new BehaviorSubject<Card[]>([]);
+  revealedCards$ = this.getMessages('match.table-cards').pipe(map((msg) => msg.payload));
 
   constructor() {
-    interval(2000)
-      .pipe(
-        takeWhile(() => this.revealedCards$.value.length < 5),
-        tap(() => this.revealTableCards()),
-      )
-      .subscribe();
+    if (this.apiService.connState() === WebSocketConnStateEnum.CLOSE) this.apiService.connect();
   }
 
-  private revealOpponentsCards() {
-    const opponents = this.opponents$.value;
-    const updatedOpponents = opponents.map(
-      (opponent) =>
-        new Opponent({
-          ...opponent,
-          cards: [faker.helpers.enumValue(CardEnum), faker.helpers.enumValue(CardEnum)],
-        }),
+  private getMessages<T extends InConnMessage['type']>(type: T) {
+    return this.apiService.receivedMessages$.pipe(
+      filter((msg): msg is Extract<InConnMessage, { type: T }> => msg.type === type),
+      shareReplay(),
     );
-
-    this.opponents$.next(updatedOpponents);
-  }
-
-  private revealTableCards() {
-    const newCard = faker.helpers.enumValue(CardEnum);
-    const current = this.revealedCards$.value;
-
-    this.revealedCards$.next([...current, newCard]);
   }
 
   isPlayerTurn(playerSeat: number) {
     return this.seatTurn$.pipe(map((seatTurn) => seatTurn === playerSeat));
   }
 
-  registerUserAction(_action: PlayerAction) {}
+  registerUserAction(action: PlayerAction, amount?: number) {
+    const baseMessage = { origin: 'CLIENT', type: 'user.action' } as const;
+
+    if (action === PlayerActionEnum.BET || action === PlayerActionEnum.RAISE)
+      return this.apiService.send({
+        ...baseMessage,
+        payload: { action, amount: amount ?? 0 },
+      });
+    this.apiService.send({
+      ...baseMessage,
+      payload: { action },
+    });
+  }
 }
