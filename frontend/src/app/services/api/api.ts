@@ -25,12 +25,6 @@ export class ApiService {
       filter((msg) => msg.origin === 'SERVER'),
       shareReplay(),
     );
-    console.log(this.API_URL);
-
-    setTimeout(
-      () => this.send({ origin: 'CLIENT', payload: { action: 'CALL' }, type: 'user.action' }),
-      5000,
-    );
   }
 
   getMessages<T extends InConnMessage['type']>(type: T) {

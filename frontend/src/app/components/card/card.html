@@ -1,9 +1,9 @@
 <img
   priority
   [alt]="variant()"
-  [ngSrc]="'cards/' + variant() + cardImgFileType()"
-  [width]="isOpponent() ? 70 : 120"
-  [height]="isOpponent() ? 140 : 240"
+  [ngSrc]="'cards/' + variant() + imgFileType()"
+  [width]="size().width"
+  [height]="size().height"
   [ngClass]="{
     'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': !isCardBack(),
   }"

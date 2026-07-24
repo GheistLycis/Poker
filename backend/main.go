@@ -82,7 +82,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/ws", handleWebSocket)
+	http.HandleFunc("/api", handleWebSocket)
 	log.Println("Server started on :3000")
 	log.Fatal(http.ListenAndServe(":3000", nil))
 }
