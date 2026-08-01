@@ -13,7 +13,17 @@ export class Card {
   owner = input.required<CardOwner>();
   class = input('');
 
-  cardImgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
-  isOpponent = computed(() => this.owner() === CardOwnerEnum.OPPONENT);
+  imgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
+  size = computed(() => {
+    let height = 140;
+    let width = height * 0.71;
+
+    if (this.owner() !== CardOwnerEnum.OPPONENT) {
+      height *= 1.5;
+      width *= 1.5;
+    }
+
+    return { width, height };
+  });
   isCardBack = computed(() => this.variant() === CardEnum.BACK);
 }
