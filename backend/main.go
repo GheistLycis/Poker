@@ -42,6 +42,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	log.Println("client connected:", conn.RemoteAddr())
 	defer log.Println("handler exited:", conn.RemoteAddr())
 	defer conn.Close()
+
+	var res Message[map[string]int]
+
+	res.Origin = "SERVER"
+	res.Type = "match.seat-turn"
+	res.Payload = map[string]int{"seatIndex": 0}
+	if err := conn.WriteJSON(&res); err != nil {
+		log.Printf("write error (%T): %v", err, err)
+	}
 	for {
 		var msg Message[any]
 		
