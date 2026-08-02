@@ -1,8 +1,21 @@
-@import 'tailwindcss';
 @import '@angular/material/prebuilt-themes/magenta-violet.css';
+@import 'tailwindcss';
+@import './app/styles/palette.css';
+@import './app/styles/fonts.css';
 @import './app/styles/animations.css';
 
-html {
-  background-color: black;
-  color: white;
+@layer base {
+  html {
+    caret-color: var(--color-secondary);
+  }
+
+  body {
+    font-family: 'Lato', sans-serif, Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    @apply text-primary bg-black/80;
+  }
 }

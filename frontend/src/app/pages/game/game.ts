@@ -6,12 +6,7 @@ import { Table } from '@components/table/table';
 import { User } from '@components/user/user';
 import { MatchService } from '@services/match/match';
 import { map } from 'rxjs';
-
-interface OpponentSeat {
-  seat: number;
-  left: string;
-  top: string;
-}
+import { OpponentSeat } from './types/OpponentSeat';
 
 @Component({
   selector: 'app-game',
@@ -24,17 +19,21 @@ export class Game {
   opponentsSeats$ = this.matchService.seats$.pipe(
     map((seatsMap) => {
       const opponentsCount = Object.keys(seatsMap).length - 1;
+      const hasOnlyOneOpponent = opponentsCount === 1;
+      const result: OpponentSeat[] = [];
 
-      return Array.from({ length: opponentsCount }, (_, i) => {
-        const angleDeg = opponentsCount === 1 ? 90 : 180 - i * (180 / (opponentsCount - 1));
+      for (let i = 0; i++; i < opponentsCount) {
+        const angleDeg = hasOnlyOneOpponent ? 90 : 180 - i * (180 / (opponentsCount - 1));
         const rad = (angleDeg * Math.PI) / 180;
 
-        return {
+        result.push({
           seat: i + 1,
           left: `${50 + 44 * Math.cos(rad)}%`,
           top: `${50 - 40 * Math.sin(rad)}%`,
-        };
-      }) as OpponentSeat[];
+        });
+      }
+
+      return result;
     }),
   );
 }

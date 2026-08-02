@@ -1,4 +1,4 @@
-import { WebSocketIncomingMessage } from '@services/api/types/WebSocketIncomingMessage';
+import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
 
 export interface ReceiveWinner extends WebSocketIncomingMessage {
   type: 'match.winner';

@@ -2,9 +2,9 @@
   @if (opponentsSeats$ | async; as opponentsSeats) {
     @for (opponentSeat of opponentsSeats; track opponentSeat.seat) {
       <div
-        class="absolute w-max -translate-1/2"
         [style.left]="opponentSeat.left"
         [style.top]="opponentSeat.top"
+        class="absolute w-max -translate-1/2"
       >
         <app-opponent [seat]="opponentSeat.seat" />
       </div>

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
-import { PlayerActionPipe } from '../../pipes/player-action/player-action-pipe';
+import { PlayerActionPipe } from '../../../../pipes/player-action/player-action-pipe';
 import { CardsHand } from '../cards-hand/cards-hand';
 
 @Component({

@@ -2,7 +2,7 @@ import { computed, inject, Service } from '@angular/core';
 import { PlayerAction, PlayerActionEnum } from '@app-types/PlayerAction';
 import { ApiService } from '@services/api/api';
 import { WebSocketConnStateEnum } from '@services/api/types/ConnState';
-import { ReceiveOpponentsHands } from '@services/api/types/messages/ReceiveOpponentsHands';
+import { ReceiveOpponentsHands } from '@services/api/types/messages/in/ReceiveOpponentsHands';
 import { map, shareReplay, startWith } from 'rxjs';
 import { combineLatest } from 'rxjs/internal/observable/combineLatest';
 
@@ -40,16 +40,15 @@ export class MatchService {
   }
 
   registerUserAction(action: PlayerAction, amount?: number) {
-    const baseMessage = { origin: 'CLIENT', type: 'user.action' } as const;
+    const type = 'user.action';
 
-    if (action === PlayerActionEnum.BET || action === PlayerActionEnum.RAISE)
-      return this.apiService.send({
-        ...baseMessage,
-        payload: { action, amount: amount ?? 0 },
-      });
-    this.apiService.send({
-      ...baseMessage,
-      payload: { action },
-    });
+    if (action === PlayerActionEnum.BET || action === PlayerActionEnum.RAISE) {
+      if (amount === undefined) {
+        throw new Error('Unexpected value: "amount" is necessary for this action');
+      }
+
+      return this.apiService.send({ type, payload: { action, amount } });
+    }
+    this.apiService.send({ type, payload: { action } });
   }
 }

@@ -1,4 +1,4 @@
-import { WebSocketOutgoingMessage } from '@services/api/types/WebSocketOutgoingMessage';
+import { WebSocketOutgoingMessage } from '../WebSocketOutgoingMessage';
 
 export interface SendUserEmote extends WebSocketOutgoingMessage {
   type: 'user.emote';

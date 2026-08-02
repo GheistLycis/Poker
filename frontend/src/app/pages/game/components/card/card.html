@@ -1,5 +1,4 @@
 <img
-  priority
   [alt]="variant()"
   [ngSrc]="'cards/' + variant() + imgFileType()"
   [width]="size().width"
@@ -8,4 +7,5 @@
     'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': !isCardBack(),
   }"
   [class]="class()"
+  priority
 />

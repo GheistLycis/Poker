@@ -1,13 +1,12 @@
 import { PlayerAction } from '@app-types/PlayerAction';
-import { WebSocketIncomingMessage } from '@services/api/types/WebSocketIncomingMessage';
+import { WebSocketOutgoingMessage } from '../WebSocketOutgoingMessage';
 
-export interface ReceiveOpponentAction extends WebSocketIncomingMessage {
-  type: 'opponents.action';
+export interface SendUserAction extends WebSocketOutgoingMessage {
+  type: 'user.action';
   payload: PurePayload | AmountPayload;
 }
 
 interface Payload {
-  player: string;
   action: PlayerAction;
 }
 

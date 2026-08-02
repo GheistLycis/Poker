@@ -1,5 +1,5 @@
 import { Opponent } from '@classes/Opponent';
-import { WebSocketIncomingMessage } from '@services/api/types/WebSocketIncomingMessage';
+import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
 
 export interface ReceiveOpponentsInfo extends WebSocketIncomingMessage {
   type: 'opponents.info';
