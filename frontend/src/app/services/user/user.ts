@@ -11,9 +11,10 @@ export class UserService {
   private apiService = inject(ApiService);
   private router = inject(Router);
 
+  private receivedUser$ = this.apiService.getMessages('user.info');
+
   user = signal<User | undefined>(undefined);
   isLoggedIn = computed(() => !!this.user());
-  receivedUser$ = this.apiService.getMessages('user.info');
 
   logIn(payload: LoginPayload) {
     this.apiService.send({ type: 'user.login', payload });
