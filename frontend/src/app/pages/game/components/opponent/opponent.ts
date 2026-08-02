@@ -1,9 +1,9 @@
 import { AsyncPipe, CurrencyPipe, NgClass } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { CardsHand } from '@components/cards-hand/cards-hand';
 import { MatchService } from '@services/match/match';
 import { combineLatest, map, switchMap } from 'rxjs';
+import { CardsHand } from '../cards-hand/cards-hand';
 
 @Component({
   selector: 'app-opponent',

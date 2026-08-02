@@ -2,9 +2,9 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { CardEnum } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
-import { Card } from '@components/card/card';
 import { MatchService } from '@services/match/match';
 import { map } from 'rxjs';
+import { Card } from '../card/card';
 
 @Component({
   selector: 'app-table',

@@ -10,7 +10,7 @@
   </div>
 
   <div class="flex items-end justify-between">
-    @if (userService.user$ | async; as user) {
+    @if (userService.user(); as user) {
       <p>{{ user.name }}</p>
       <app-cards-hand [player]="user" />
       <div>
