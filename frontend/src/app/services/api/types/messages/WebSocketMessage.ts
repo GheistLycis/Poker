@@ -1,4 +1,4 @@
-export type Context = 'user' | 'opponents' | 'match';
+export type Context = 'exception' | 'user' | 'opponents' | 'match';
 
 export interface WebSocketMessage<T extends Context = Context> {
   origin: 'CLIENT' | 'SERVER';

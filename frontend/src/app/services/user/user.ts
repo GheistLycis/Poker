@@ -2,7 +2,7 @@ import { computed, inject, Service, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CreateUser, User } from '@classes/User';
 import { ApiService } from '@services/api/api';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, tap } from 'rxjs';
 import { USER_STORAGE_KEY } from './consts';
 import { LoginPayload } from './types/LoginPayload';
 
@@ -17,7 +17,7 @@ export class UserService {
   isLoggedIn = computed(() => !!this.user());
 
   logIn(payload: LoginPayload) {
-    this.apiService.send({ type: 'user.login', payload });
+    return this.apiService.send({ type: 'user.login', payload }).pipe(tap((u) => {}));
 
     return firstValueFrom(this.receivedUser$).then((user) => {
       this.user.set(user);

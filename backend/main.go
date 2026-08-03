@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -23,9 +24,10 @@ const (
 )
 
 type Message[T any] struct {
-	Origin  Origin `json:"origin"`
-	Type    string `json:"type"`
-	Payload T      `json:"payload"`
+	Id      uuid.UUID `json:"id"`
+	Origin  Origin    `json:"origin"`
+	Type    string    `json:"type"`
+	Payload T         `json:"payload"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -47,6 +49,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	var res Message[map[string]int]
 
+	res.Id = uuid.New()
 	res.Origin = "SERVER"
 	res.Type = "match.seat-turn"
 	res.Payload = map[string]int{"seatIndex": 0}
@@ -73,10 +76,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			}
 			var res Message[map[string]any]
 
+			res.Id = msg.Id
 			res.Origin = "SERVER"
 			res.Type = "user.info"
 			res.Payload = map[string]any{
-				"id":    "id",
 				"name":  userName,
 				"score": 0,
 				"cards": []any{},
