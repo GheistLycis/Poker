@@ -8,3 +8,5 @@ export const USER = new User({
   score: faker.number.int(1_000_000),
   cards: [faker.helpers.enumValue(CardEnum), faker.helpers.enumValue(CardEnum)],
 });
+
+export const USER_STORAGE_KEY = 'logged-user';

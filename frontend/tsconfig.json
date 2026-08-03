@@ -20,7 +20,7 @@
       "@components/*": ["./src/app/pages/game/components/*"],
       "@env": ["./src/environments/environment"],
       "@guards/*": ["./src/app/guards/*"],
-      "@pipes/*": ["./src/app/pages/game/pipes/*"],
+      "@pipes/*": ["./src/app/pipes/*"],
       "@services/*": ["./src/app/services/*"]
     }
   },

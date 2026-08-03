@@ -3,10 +3,10 @@
     @if (cards$ | async; as cards) {
       @for (card of cards; track card) {
         <app-card
-          animate.enter="fade-in"
-          animate.leave="fade-out"
           [variant]="card"
           [owner]="CARD_OWNER_ENUM.TABLE"
+          animate.enter="fade-in"
+          animate.leave="fade-out"
         />
       }
     }
@@ -14,19 +14,19 @@
 
   <div class="relative w-30">
     <app-card
+      [variant]="CARD_ENUM.BACK"
+      [owner]="CARD_OWNER_ENUM.TABLE"
       class="absolute inset-0 z-0"
-      [variant]="CARD_ENUM.BACK"
-      [owner]="CARD_OWNER_ENUM.TABLE"
     />
     <app-card
+      [variant]="CARD_ENUM.BACK"
+      [owner]="CARD_OWNER_ENUM.TABLE"
       class="absolute inset-0 z-10 translate-px"
-      [variant]="CARD_ENUM.BACK"
-      [owner]="CARD_OWNER_ENUM.TABLE"
     />
     <app-card
-      class="absolute inset-0 z-20 translate-0.5"
       [variant]="CARD_ENUM.BACK"
       [owner]="CARD_OWNER_ENUM.TABLE"
+      class="absolute inset-0 z-20 translate-0.5"
     />
   </div>
 </div>

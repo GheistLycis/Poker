@@ -1,5 +1,5 @@
 import { Card } from '@app-types/Card';
-import { WebSocketIncomingMessage } from '@services/api/types/WebSocketIncomingMessage';
+import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
 
 export interface ReceiveOpponentsHands extends WebSocketIncomingMessage {
   type: 'opponents.reveal-hands';

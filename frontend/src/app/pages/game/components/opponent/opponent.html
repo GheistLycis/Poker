@@ -1,8 +1,8 @@
 <div class="flex flex-col items-start">
   @if (opponent$ | async; as opponent) {
     <p
-      class="max-w-[13ch] truncate font-semibold"
       [ngClass]="{ 'text-red-700': isOpponentTurn$ | async }"
+      class="max-w-[13ch] truncate font-semibold"
     >
       {{ opponent.name }}
     </p>

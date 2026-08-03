@@ -3,7 +3,8 @@ import { environment } from '@env';
 import { filter, map, Observable, retry, shareReplay, timer } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WebSocketConnState, WebSocketConnStateEnum } from './types/ConnState';
-import { ConnMessage, InConnMessage, OutConnMessage } from './types/messages/ConnMessage';
+import { ConnMessage, InConnMessage } from './types/messages/ConnMessage';
+import { SendMessage } from './types/SendMessage';
 
 @Service()
 export class ApiService {
@@ -36,8 +37,8 @@ export class ApiService {
     );
   }
 
-  send(msg: OutConnMessage): void {
-    this.connection$.next(msg);
+  send(msg: SendMessage): void {
+    this.connection$.next({ ...msg, origin: 'CLIENT' });
   }
 
   close(): void {

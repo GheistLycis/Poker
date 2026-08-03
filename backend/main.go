@@ -61,6 +61,30 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
+
+		if msg.Type == "user.login" {
+			payload, ok := msg.Payload.(map[string]any)
+			if !ok {
+				log.Printf("400: bad payload")
+			}
+			userName, ok := payload["userName"].(string)
+			if !ok {
+				log.Printf("400: userName must be a valid string")
+			}
+			var res Message[map[string]any]
+
+			res.Origin = "SERVER"
+			res.Type = "user.info"
+			res.Payload = map[string]any{
+				"id":    "id",
+				"name":  userName,
+				"score": 0,
+				"cards": []any{},
+			}
+			if err := conn.WriteJSON(&res); err != nil {
+				log.Printf("write error (%T): %v", err, err)
+			}
+		}
 	}
 }
 

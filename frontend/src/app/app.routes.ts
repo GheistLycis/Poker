@@ -9,5 +9,5 @@ export const routes: Routes = [
   { path: '', redirectTo: 'game', pathMatch: 'full' },
   { path: 'game', loadComponent: () => Game, canActivate: [isLoggedInGuard] },
   { path: 'login', loadComponent: () => Login, canActivate: [isNotLoggedInGuard] },
-  { path: '**', redirectTo: '' },
+  { path: '**', redirectTo: '/' },
 ];

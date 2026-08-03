@@ -53,12 +53,12 @@ module.exports = defineConfig([
         {
           alphabetical: false,
           order: [
-            'STRUCTURAL_DIRECTIVE',
             'TEMPLATE_REFERENCE',
-            'ATTRIBUTE_BINDING',
+            'STRUCTURAL_DIRECTIVE',
+            'OUTPUT_BINDING',
             'INPUT_BINDING',
             'TWO_WAY_BINDING',
-            'OUTPUT_BINDING',
+            'ATTRIBUTE_BINDING',
           ],
         },
       ],
