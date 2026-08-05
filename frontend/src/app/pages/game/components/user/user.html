@@ -12,7 +12,7 @@
   <div class="flex items-end justify-between">
     @if (userService.user(); as user) {
       <p>{{ user.name }}</p>
-      <app-cards-hand [player]="user" />
+      <app-cards-hand [player]="user" [isUser]="true" />
       <div>
         <p>Score:</p>
         <p>{{ user.score | currency }}</p>

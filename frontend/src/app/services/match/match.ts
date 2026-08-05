@@ -19,8 +19,8 @@ export class MatchService {
       .pipe(startWith<ReceiveOpponentsHands['payload']>({})),
   ]).pipe(
     map(([opponents, hands]) => {
-      Object.entries(hands).forEach(([id, hand]) => {
-        const opponent = opponents.find((opponent) => opponent.id === id);
+      Object.entries(hands).forEach(([userName, hand]) => {
+        const opponent = opponents.find((opponent) => opponent.name === userName);
 
         if (opponent) opponent.cards = hand;
       });
@@ -43,12 +43,11 @@ export class MatchService {
     const type = 'user.action';
 
     if (action === PlayerActionEnum.BET || action === PlayerActionEnum.RAISE) {
-      if (amount === undefined) {
-        throw new Error('Unexpected value: "amount" is necessary for this action');
-      }
+      if (amount === undefined)
+        throw new Error(`Unexpected value: "amount" is necessary for ${action} action`);
 
       return this.apiService.send({ type, payload: { action, amount } });
     }
-    this.apiService.send({ type, payload: { action } });
+    return this.apiService.send({ type, payload: { action } });
   }
 }

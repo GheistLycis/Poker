@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -23,9 +24,10 @@ const (
 )
 
 type Message[T any] struct {
-	Origin  Origin `json:"origin"`
-	Type    string `json:"type"`
-	Payload T      `json:"payload"`
+	RequestId *uuid.UUID `json:"requestId"`
+	Origin    Origin     `json:"origin"`
+	Type      string     `json:"type"`
+	Payload   T          `json:"payload"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -45,14 +47,6 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer log.Println("handler exited:", conn.RemoteAddr())
 	defer conn.Close()
 
-	var res Message[map[string]int]
-
-	res.Origin = "SERVER"
-	res.Type = "match.seat-turn"
-	res.Payload = map[string]int{"seatIndex": 0}
-	if err := conn.WriteJSON(&res); err != nil {
-		log.Printf("write error (%T): %v", err, err)
-	}
 	for {
 		var msg Message[any]
 
@@ -71,17 +65,26 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				log.Printf("400: userName must be a valid string")
 			}
-			var res Message[map[string]any]
+			var loginRes Message[map[string]any]
 
-			res.Origin = "SERVER"
-			res.Type = "user.info"
-			res.Payload = map[string]any{
-				"id":    "id",
+			loginRes.RequestId = msg.RequestId
+			loginRes.Origin = "SERVER"
+			loginRes.Type = "user.info"
+			loginRes.Payload = map[string]any{
 				"name":  userName,
 				"score": 0,
 				"cards": []any{},
 			}
-			if err := conn.WriteJSON(&res); err != nil {
+			if err := conn.WriteJSON(&loginRes); err != nil {
+				log.Printf("write error (%T): %v", err, err)
+			}
+
+			var playerTurnRes Message[map[string]int]
+
+			playerTurnRes.Origin = "SERVER"
+			playerTurnRes.Type = "match.seat-turn"
+			playerTurnRes.Payload = map[string]int{"seatIndex": 0}
+			if err := conn.WriteJSON(&playerTurnRes); err != nil {
 				log.Printf("write error (%T): %v", err, err)
 			}
 		}

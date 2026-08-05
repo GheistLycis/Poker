@@ -20,6 +20,6 @@ export class Opponent {
     this.matchService.opponents$,
     this.matchService.seats$,
     this.seat$,
-  ]).pipe(map(([opponents, seats, seat]) => opponents.find(({ id }) => id === seats[seat])));
+  ]).pipe(map(([opponents, seats, seat]) => opponents.find(({ name }) => name === seats[seat])));
   isOpponentTurn$ = this.seat$.pipe(switchMap((seat) => this.matchService.isPlayerTurn(seat)));
 }

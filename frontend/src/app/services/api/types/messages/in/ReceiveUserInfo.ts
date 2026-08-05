@@ -1,4 +1,4 @@
-import { User } from '@classes/User';
+import { User } from '@app-types/User';
 import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
 
 export interface ReceiveUserInfo extends WebSocketIncomingMessage {

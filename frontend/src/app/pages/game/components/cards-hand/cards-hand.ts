@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { CardEnum, Card as CardType } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
-import { Opponent } from '@classes/Opponent';
-import { User } from '@classes/User';
+import { Opponent } from '@app-types/Opponent';
+import { User } from '@app-types/User';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
 import { interval, map, switchMap, takeWhile } from 'rxjs';
@@ -23,8 +23,8 @@ export class CardsHand {
   matchService = inject(MatchService);
 
   player = input.required<User | Opponent>();
+  isUser = input.required<boolean>();
 
-  isUser = computed(() => this.player() instanceof User);
   // APPLYING "PUSH EACH CARD TO HAND" EFFECT
   cards$ = toObservable(this.player).pipe(
     switchMap(({ cards }) =>
