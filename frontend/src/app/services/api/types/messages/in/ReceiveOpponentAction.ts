@@ -1,5 +1,5 @@
 import { PlayerAction } from '@app-types/PlayerAction';
-import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
+import { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
 
 export interface ReceiveOpponentAction extends WebSocketIncomingMessage {
   type: 'opponents.action';

@@ -1,4 +1,4 @@
-import { WebSocketMessage } from './WebSocketMessage';
+import { WebSocketMessage } from '../WebSocketMessage';
 
 export interface WebSocketIncomingMessage extends WebSocketMessage {
   origin: 'SERVER';

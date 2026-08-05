@@ -1,4 +1,4 @@
-import { WebSocketIncomingMessage } from '../WebSocketIncomingMessage';
+import { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
 
 export interface ReceivePotAmount extends WebSocketIncomingMessage {
   type: 'match.pot-amount';
