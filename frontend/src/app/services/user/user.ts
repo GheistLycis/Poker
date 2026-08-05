@@ -1,6 +1,6 @@
 import { computed, inject, Service, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { CreateUser, User } from '@classes/User';
+import { User } from '@app-types/User';
 import { ApiService } from '@services/api/api';
 import { tap } from 'rxjs';
 import { USER_STORAGE_KEY } from './consts';
@@ -30,9 +30,9 @@ export class UserService {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
 
     if (storedUser) {
-      const user: CreateUser = JSON.parse(storedUser);
+      const user: User = JSON.parse(storedUser);
 
-      this.user.set(new User(user));
+      this.user.set(user);
     }
   }
 }
