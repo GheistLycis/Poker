@@ -2,5 +2,9 @@ import { WebSocketMessage } from './WebSocketMessage';
 
 export interface WebSocketIncomingMessage extends WebSocketMessage {
   origin: 'SERVER';
-  request_id?: string;
+  requestId: string | null;
+  error: {
+    message: string;
+    details: object | null;
+  } | null;
 }

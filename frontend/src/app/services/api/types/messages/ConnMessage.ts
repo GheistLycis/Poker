@@ -1,4 +1,3 @@
-import { ReceiveException } from './in/ReceiveException';
 import { ReceiveOpponentAction } from './in/ReceiveOpponentAction';
 import { ReceiveOpponentsHands } from './in/ReceiveOpponentsHands';
 import { ReceiveOpponentsInfo } from './in/ReceiveOpponentsInfo';
@@ -13,7 +12,6 @@ import { SendUserEmote } from './out/SendUserEmote';
 import { SendUserLogin } from './out/SendUserLogin';
 
 export type InConnMessage =
-  | ReceiveException
   | ReceiveOpponentAction
   | ReceiveOpponentsHands
   | ReceiveOpponentsInfo

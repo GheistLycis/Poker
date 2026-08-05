@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { IsFieldInvalidPipe } from '@pipes/is-field-invalid/is-field-invalid-pipe';
 import { UserService } from '@services/user/user';
+import { firstValueFrom, map } from 'rxjs';
 import { LoginFormData } from './types/LoginFormData';
 
 @Component({
@@ -29,7 +30,11 @@ export class Login {
     },
     {
       submission: {
-        action: (form) => this.userService.logIn(form().value()).then(() => undefined),
+        action: (form) => {
+          const val = form().value();
+
+          return firstValueFrom(this.userService.logIn(val).pipe(map(() => undefined)));
+        },
       },
     },
   );
