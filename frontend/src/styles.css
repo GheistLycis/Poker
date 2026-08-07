@@ -1,8 +1,8 @@
 @import '@angular/material/prebuilt-themes/magenta-violet.css';
 @import 'tailwindcss';
-@import './app/styles/palette.css';
-@import './app/styles/fonts.css';
-@import './app/styles/animations.css';
+@import './styles/fonts.css';
+@import './styles/animations.css';
+@import './styles/palette.css';
 
 @layer base {
   html {
