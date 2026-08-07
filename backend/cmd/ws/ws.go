@@ -37,18 +37,13 @@ var upgrader = websocket.Upgrader{
 }
 
 func HandleWebSocketConn(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := stablishConn(w, r)
 	if err != nil {
-		log.Println("upgrade error:", err)
 		return
 	}
 
-	log.Println("client connected:", conn.RemoteAddr())
-	defer log.Println("handler exited:", conn.RemoteAddr())
-	defer conn.Close()
-
 	for {
-		msg, err := readConn(conn)
+		msg, err := readNextMessage(conn)
 		if err != nil {
 			break
 		}
@@ -71,7 +66,7 @@ func HandleWebSocketConn(w http.ResponseWriter, r *http.Request) {
 				"score": 0,
 				"cards": []any{},
 			}
-			if err = writeConn(conn, loginRes); err != nil {
+			if err = sendMessage(conn, loginRes); err != nil {
 				break
 			}
 
@@ -79,14 +74,28 @@ func HandleWebSocketConn(w http.ResponseWriter, r *http.Request) {
 
 			playerTurnRes.Type = "match.seat-turn"
 			playerTurnRes.Payload = map[string]int{"seatIndex": 0}
-			if err = writeConn(conn, playerTurnRes); err != nil {
+			if err = sendMessage(conn, playerTurnRes); err != nil {
 				break
 			}
 		}
 	}
 }
 
-func readConn(c *websocket.Conn) (*Message[any], error) {
+func stablishConn(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("upgrade error:", err)
+		return conn, err
+	}
+
+	log.Println("client connected:", conn.RemoteAddr())
+	defer log.Println("handler exited:", conn.RemoteAddr())
+	defer conn.Close()
+
+	return conn, nil
+}
+
+func readNextMessage(c *websocket.Conn) (*Message[any], error) {
 	msg := &Message[any]{}
 
 	if err := c.ReadJSON(msg); err != nil {
@@ -98,7 +107,7 @@ func readConn(c *websocket.Conn) (*Message[any], error) {
 	return msg, nil
 }
 
-func writeConn[T any](c *websocket.Conn, m *Message[T]) error {
+func sendMessage[T any](c *websocket.Conn, m *Message[T]) error {
 	m.Origin = "SERVER"
 	if err := c.WriteJSON(m); err != nil {
 		log.Printf("write error (%T): %v", err, err)
