@@ -13,15 +13,12 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-var hub *Hub
+var hub = newHub()
 
 func InitServer(r string, p int) {
-	hub = newHub()
-
-	go hub.handleTicks()
-
 	port := ":" + fmt.Sprintf("%d", p)
 
+	go hub.handleTicks()
 	http.HandleFunc(r, handleConn)
 	log.Println("Server started on " + port)
 	log.Fatal(http.ListenAndServe(port, nil))
