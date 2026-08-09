@@ -68,9 +68,11 @@ func (c *Client) handleReceivedMessage(m *Message[any]) error {
 			m.RequestId,
 			"user.info",
 			map[string]any{
-				"name":  player.Name,
-				"score": player.Score,
-				"cards": player.Cards,
+				"id":        player.Id,
+				"name":      player.Name,
+				"score":     player.Score,
+				"seatIndex": player.SeatIndex,
+				"cards":     player.Cards,
 			},
 		); err != nil {
 			return err

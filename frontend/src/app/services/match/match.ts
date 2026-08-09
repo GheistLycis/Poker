@@ -19,8 +19,8 @@ export class MatchService {
       .pipe(startWith<ReceiveOpponentsHands['payload']>({})),
   ]).pipe(
     map(([opponents, hands]) => {
-      Object.entries(hands).forEach(([userName, hand]) => {
-        const opponent = opponents.find((opponent) => opponent.name === userName);
+      Object.entries(hands).forEach(([id, hand]) => {
+        const opponent = opponents.find((opponent) => opponent.id === id);
 
         if (opponent) opponent.cards = hand;
       });

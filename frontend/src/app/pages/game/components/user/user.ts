@@ -1,9 +1,11 @@
 import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
+import { filter, switchMap } from 'rxjs';
 import { PlayerActionPipe } from '../../../../pipes/player-action/player-action-pipe';
 import { CardsHand } from '../cards-hand/cards-hand';
 
@@ -18,5 +20,8 @@ export class User {
   userService = inject(UserService);
   matchService = inject(MatchService);
 
-  isUserTurn$ = this.matchService.isPlayerTurn(0);
+  isUserTurn$ = toObservable(this.userService.user).pipe(
+    filter((user) => !!user),
+    switchMap((user) => this.matchService.isPlayerTurn(user.seatIndex)),
+  );
 }
