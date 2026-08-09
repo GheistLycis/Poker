@@ -22,7 +22,7 @@ import { SendMessage } from './types/SendMessage';
 export class ApiService {
   private API_URL = environment.apiUrl;
 
-  private destroyRef$ = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
 
   private connection$ = webSocket<ConnMessage>({
     url: this.API_URL,
@@ -41,7 +41,7 @@ export class ApiService {
   }
 
   private eagerlyInitConn() {
-    this.receivedMessages$.pipe(takeUntilDestroyed(this.destroyRef$)).subscribe();
+    this.receivedMessages$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
   getMessages<T extends InConnMessage['type']>(type: T) {
