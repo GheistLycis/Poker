@@ -14,21 +14,23 @@ type Client struct {
 	addr   net.Addr
 	conn   *websocket.Conn
 	player *app.Player
+	hub    *Hub
 }
 
-func newClient(c *websocket.Conn) *Client {
+func newClient(c *websocket.Conn, h *Hub) *Client {
 	return &Client{
 		addr: c.RemoteAddr(),
 		conn: c,
+		hub:  h,
 	}
 }
 
-func (c *Client) receiveMessages() {
+func (c *Client) handleMessages() {
 	for {
 		msg := &Message[any]{}
 		if err := c.conn.ReadJSON(msg); err != nil {
 			log.Printf("read error (%T): %v", err, err)
-			hub.unregister <- c.addr
+			c.hub.unregister <- c.addr
 			return
 		}
 		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
@@ -51,7 +53,7 @@ func (c *Client) handleReceivedMessage(m *Message[any]) error {
 		}
 
 		var availableSeat *app.Seat
-		for _, s := range hub.match.Seats {
+		for _, s := range c.hub.match.Seats {
 			if s.Player == nil {
 				availableSeat = s
 				break

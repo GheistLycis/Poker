@@ -17,3 +17,7 @@ func newOutMessage[T any](rId *uuid.UUID, t string, p T) *Message[T] {
 		Payload:   p,
 	}
 }
+
+func (m *Message[T]) asAny() *Message[any] {
+	return newOutMessage[any](m.RequestId, m.Type, m.Payload)
+}
