@@ -3,6 +3,7 @@ package ws
 import (
 	"backend/src/app"
 	"net"
+	"time"
 )
 
 type Hub struct {
@@ -26,27 +27,62 @@ func newHub() *Hub {
 }
 
 func (h *Hub) handleTicks() {
+	turnTimer := time.NewTicker(20 * time.Second)
+
+	defer turnTimer.Stop()
 	for {
 		select {
+		case <-turnTimer.C:
+			h.handleNextTurn()
+
 		case c := <-h.register:
-			h.clients[c.addr] = c
+			h.handleRegisterClient(c)
 
 		case addr := <-h.unregister:
-			delete(h.clients, addr)
+			h.handleUnregisterClient(addr)
 
 		case m := <-h.broadcast:
-			for _, c := range h.clients {
-				c.sendMessage(m.RequestId, m.Type, m.Payload)
-			}
+			h.handleBroadcastMessage(m)
 
 		case dm := <-h.direct:
-			client := h.clients[dm.conn]
-
-			client.sendMessage(
-				dm.message.RequestId,
-				dm.message.Type,
-				dm.message.Payload,
-			)
+			h.handleDirectMessage(dm)
 		}
 	}
+}
+
+func (h *Hub) handleNextTurn() {
+	nextSeatTurn := h.match.PassTurn()
+	seatTurnMsg := newOutMessage(
+		nil,
+		"match.seat-turn",
+		map[string]app.SeatIndex{
+			"seatIndex": nextSeatTurn.Index,
+		},
+	)
+
+	h.broadcast <- seatTurnMsg.asAny()
+}
+
+func (h *Hub) handleRegisterClient(c *Client) {
+	h.clients[c.addr] = c
+}
+
+func (h *Hub) handleUnregisterClient(addr net.Addr) {
+	delete(h.clients, addr)
+}
+
+func (h *Hub) handleBroadcastMessage(m *Message[any]) {
+	for _, c := range h.clients {
+		c.sendMessage(m.RequestId, m.Type, m.Payload)
+	}
+}
+
+func (h *Hub) handleDirectMessage(dm *DirectMessage[any]) {
+	client := h.clients[dm.conn]
+
+	client.sendMessage(
+		dm.message.RequestId,
+		dm.message.Type,
+		dm.message.Payload,
+	)
 }

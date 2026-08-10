@@ -13,18 +13,20 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-var hub = newHub()
 
 func InitServer(r string, p int) {
+	hub := newHub()
 	port := ":" + fmt.Sprintf("%d", p)
 
 	go hub.handleTicks()
-	http.HandleFunc(r, handleConn)
+	http.HandleFunc(r, func(w http.ResponseWriter, r *http.Request) {
+		handleNewConn(hub, w, r)
+	})
 	log.Println("Server started on " + port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func handleConn(w http.ResponseWriter, r *http.Request) {
+func handleNewConn(h *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("upgrade error:", err)
@@ -35,8 +37,8 @@ func handleConn(w http.ResponseWriter, r *http.Request) {
 	defer log.Println("client disconnected:", connAddr)
 	defer conn.Close()
 
-	client := newClient(conn)
+	client := newClient(conn, h)
 
-	hub.register <- client
-	client.receiveMessages()
+	h.register <- client
+	client.handleMessages()
 }
