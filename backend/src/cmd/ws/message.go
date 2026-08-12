@@ -7,17 +7,19 @@ type Message[T any] struct {
 	Origin    Origin     `json:"origin"`
 	Type      string     `json:"type"`
 	Payload   T          `json:"payload"`
+	Error     *Error     `json:"error"`
 }
 
-func newOutMessage[T any](rId *uuid.UUID, t string, p T) *Message[T] {
+func newOutMessage[T any](rId *uuid.UUID, t string, p T, err *Error) *Message[T] {
 	return &Message[T]{
 		RequestId: rId,
 		Origin:    SERVER,
 		Type:      t,
 		Payload:   p,
+		Error:     err,
 	}
 }
 
 func (m *Message[T]) asAny() *Message[any] {
-	return newOutMessage[any](m.RequestId, m.Type, m.Payload)
+	return newOutMessage[any](m.RequestId, m.Type, m.Payload, m.Error)
 }

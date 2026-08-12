@@ -13,6 +13,7 @@ type Hub struct {
 	unregister chan net.Addr
 	broadcast  chan *Message[any]
 	direct     chan *DirectMessage[any]
+	endTurn    chan struct{}
 }
 
 func newHub() *Hub {
@@ -23,16 +24,23 @@ func newHub() *Hub {
 		unregister: make(chan net.Addr),
 		broadcast:  make(chan *Message[any]),
 		direct:     make(chan *DirectMessage[any]),
+		endTurn:    make(chan struct{}),
 	}
 }
 
-func (h *Hub) handleTicks() {
-	turnTimer := time.NewTicker(20 * time.Second)
+var TurnDuration = 15 * time.Second
 
+func (h *Hub) handleTicks() {
+	turnTimer := time.NewTicker(TurnDuration)
 	defer turnTimer.Stop()
+
 	for {
 		select {
 		case <-turnTimer.C:
+			h.endTurn <- struct{}{}
+
+		case <-h.endTurn:
+			turnTimer.Reset(TurnDuration)
 			h.handleNextTurn()
 
 		case c := <-h.register:
@@ -58,6 +66,7 @@ func (h *Hub) handleNextTurn() {
 		map[string]app.SeatIndex{
 			"seatIndex": nextSeatTurn.Index,
 		},
+		nil,
 	)
 
 	h.broadcast <- seatTurnMsg.asAny()
@@ -73,7 +82,7 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {
 	for _, c := range h.clients {
-		c.sendMessage(m.RequestId, m.Type, m.Payload)
+		c.sendMessage(m.RequestId, m.Type, m.Payload, nil)
 	}
 }
 
@@ -84,5 +93,6 @@ func (h *Hub) handleDirectMessage(dm *DirectMessage[any]) {
 		dm.message.RequestId,
 		dm.message.Type,
 		dm.message.Payload,
+		nil,
 	)
 }

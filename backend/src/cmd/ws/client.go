@@ -3,8 +3,10 @@ package ws
 import (
 	"backend/src/app"
 	"errors"
+	"fmt"
 	"log"
 	"net"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -34,75 +36,108 @@ func (c *Client) handleMessages() {
 			return
 		}
 		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
-		if err := c.handleReceivedMessage(msg); err != nil {
-			log.Printf("failed to handle message: %v", err)
-		}
-	}
-}
 
-// TODO: pass use cases handling down to app pkg
-func (c *Client) handleReceivedMessage(m *Message[any]) error {
-	if m.Type == "user.login" {
-		payload, ok := m.Payload.(map[string]any)
-		if !ok {
-			return errors.New("malformed payload")
-		}
-		userName, ok := payload["userName"].(string)
-		if !ok {
-			return errors.New("userName must be a valid string")
-		}
-
-		var availableSeat *app.Seat
-		for _, s := range c.hub.match.Seats {
-			if s.Player == nil {
-				availableSeat = s
-				break
+		switch msg.Type {
+		case "user.login":
+			if err := c.handleLogin(msg); err != nil {
+				c.sendMessage(
+					msg.RequestId,
+					msg.Type,
+					nil,
+					newError(fmt.Sprintf("failed to handle login: %v", err), nil),
+				)
 			}
-		}
-		if availableSeat == nil {
-			return errors.New("no available seats for user in this match")
-		}
-		player := app.NewPlayer(userName, availableSeat.Index)
-		availableSeat.Player = player
-		c.player = player
 
-		if err := c.sendMessage(
-			m.RequestId,
-			"user.info",
-			map[string]any{
-				"id":        player.Id,
-				"name":      player.Name,
-				"score":     player.Score,
-				"seatIndex": player.SeatIndex,
-				"cards":     player.Cards,
-			},
-		); err != nil {
-			return err
-		}
+		case "user.action":
+			if err := c.handleAction(msg); err != nil {
+				c.sendMessage(
+					msg.RequestId,
+					msg.Type,
+					nil,
+					newError(fmt.Sprintf("failed to handle action: %v", err), nil),
+				)
+			}
 
-		if err := c.sendMessage(
-			nil,
-			"match.seat-turn",
-			map[string]app.SeatIndex{"seatIndex": player.SeatIndex},
-		); err != nil {
-			return err
+		default:
+			log.Printf("// TODO: handle message type '%s'", msg.Type)
 		}
-
-		return nil
 	}
-
-	log.Printf("// TODO: handle message type '%s'", m.Type)
-
-	return nil
 }
 
-func (c *Client) sendMessage(rId *uuid.UUID, t string, p any) error {
-	msg := newOutMessage(rId, t, p)
+func (c *Client) sendMessage(rId *uuid.UUID, t string, p any, err *Error) error {
+	msg := newOutMessage(rId, t, p, err)
 
 	if err := c.conn.WriteJSON(msg); err != nil {
 		log.Printf("write error (%T): %v", err, err)
 		return err
 	}
+
+	return nil
+}
+
+func (c *Client) handleLogin(m *Message[any]) error {
+	payload, ok := m.Payload.(struct {
+		userName string
+	})
+	if !ok {
+		return errors.New("malformed payload")
+	}
+
+	var availableSeat *app.Seat
+	for _, s := range c.hub.match.Seats {
+		if s.Player == nil {
+			availableSeat = s
+			break
+		}
+	}
+	if availableSeat == nil {
+		return errors.New("no available seats for user in this match")
+	}
+
+	player := app.NewPlayer(payload.userName, availableSeat.Index)
+	availableSeat.Player = player
+	c.player = player
+
+	userInfoPayload := map[string]any{
+		"id":        player.Id,
+		"name":      player.Name,
+		"score":     player.Score,
+		"seatIndex": player.SeatIndex,
+		"cards":     player.Cards,
+	}
+	if err := c.sendMessage(m.RequestId, "user.info", userInfoPayload, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) handleAction(m *Message[any]) error {
+	payload, ok := m.Payload.(struct {
+		action app.PlayerAction
+		amount *int
+	})
+	if !ok {
+		return errors.New("malformed payload")
+	}
+	if slices.Contains(app.ActionsWithAmount, payload.action) && payload.amount == nil {
+		return fmt.Errorf("no amount provided for action %s", payload.action)
+	}
+
+	// TODO
+	switch payload.action {
+	case app.CHECK:
+
+	case app.CALL:
+
+	case app.FOLD:
+
+	case app.BET:
+
+	case app.RAISE:
+	}
+
+	c.hub.endTurn <- struct{}{}
 
 	return nil
 }
