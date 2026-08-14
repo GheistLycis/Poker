@@ -9,7 +9,7 @@ type Match struct {
 	Pot        int
 	TableCards [3]Card
 	Deck       *map[Card]bool
-	seatTurn   *Seat
+	SeatTurn   *Seat
 }
 
 func NewMatch() *Match {
@@ -88,13 +88,13 @@ func NewMatch() *Match {
 		Seats:      seats,
 		TableCards: [3]Card{0: BACK, 1: BACK, 2: BACK},
 		Deck:       deck,
-		seatTurn:   seats[ZERO],
+		SeatTurn:   seats[ZERO],
 	}
 }
 
 func (m *Match) PassTurn() *Seat {
 	var nextSeat *Seat
-	i := m.seatTurn.Index + 1
+	i := m.SeatTurn.Index + 1
 	length := len(m.Seats)
 
 	for range length {
@@ -110,7 +110,7 @@ func (m *Match) PassTurn() *Seat {
 		}
 		i++
 	}
-	m.seatTurn = nextSeat
+	m.SeatTurn = nextSeat
 
 	return nextSeat
 }

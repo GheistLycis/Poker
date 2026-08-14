@@ -40,8 +40,8 @@ func (h *Hub) handleTicks() {
 			h.endTurn <- struct{}{}
 
 		case <-h.endTurn:
-			turnTimer.Reset(TurnDuration)
 			h.handleNextTurn()
+			turnTimer.Reset(TurnDuration)
 
 		case c := <-h.register:
 			h.handleRegisterClient(c)
@@ -77,6 +77,12 @@ func (h *Hub) handleRegisterClient(c *Client) {
 }
 
 func (h *Hub) handleUnregisterClient(addr net.Addr) {
+	playerSeat := h.clients[addr].player.SeatIndex
+	playerTurn := h.match.SeatTurn.Index
+
+	if playerSeat == playerTurn {
+		h.endTurn <- struct{}{}
+	}
 	delete(h.clients, addr)
 }
 
