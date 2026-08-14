@@ -32,11 +32,6 @@ func (p *Player) Call(v int) error {
 	return nil
 }
 
-func (p *Player) Fold() error {
-
-	return nil
-}
-
 func (p *Player) Bet() error {
 
 	return nil

@@ -1,8 +1,9 @@
-import { computed, inject, Service, signal } from '@angular/core';
+import { computed, effect, inject, linkedSignal, Service } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { User } from '@app-types/User';
 import { ApiService } from '@services/api/api';
-import { tap } from 'rxjs';
+import { take, tap } from 'rxjs';
 import { USER_STORAGE_KEY } from './consts';
 import { LoginPayload } from './types/LoginPayload';
 
@@ -11,18 +12,17 @@ export class UserService {
   private apiService = inject(ApiService);
   private router = inject(Router);
 
-  user = signal<User | undefined>(undefined);
+  private user$ = this.apiService.getMessages('user.info');
+  private userSig = toSignal(this.user$);
+  user = linkedSignal(() => this.userSig());
   isLoggedIn = computed(() => !!this.user());
 
   logIn(payload: LoginPayload) {
     this.apiService.send({ type: 'user.login', payload });
 
-    return this.apiService.getMessages('user.info').pipe(
-      tap((user) => {
-        this.user.set(user);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-        this.router.navigate(['']);
-      }),
+    return this.user$.pipe(
+      take(1),
+      tap(() => this.router.navigate([''])),
     );
   }
 
@@ -34,5 +34,11 @@ export class UserService {
 
       this.user.set(user);
     }
+
+    effect(() => {
+      const user = this.user();
+
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    });
   }
 }

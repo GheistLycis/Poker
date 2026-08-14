@@ -65,7 +65,7 @@ func (c *Client) handleMessages() {
 	}
 }
 
-func (c *Client) sendMessage(rId *uuid.UUID, t string, p any, err *Error) error {
+func (c *Client) sendMessage(rId *uuid.UUID, t MessageType, p any, err *Error) error {
 	msg := newOutMessage(rId, t, p, err)
 
 	if err := c.conn.WriteJSON(msg); err != nil {
@@ -98,17 +98,7 @@ func (c *Client) handleLogin(m *Message[any]) error {
 	player := app.NewPlayer(payload.userName, availableSeat.Index)
 	availableSeat.Player = player
 	c.player = player
-
-	userInfoPayload := map[string]any{
-		"id":        player.Id,
-		"name":      player.Name,
-		"score":     player.Score,
-		"seatIndex": player.SeatIndex,
-		"cards":     player.Cards,
-	}
-	if err := c.sendMessage(m.RequestId, "user.info", userInfoPayload, nil); err != nil {
-		return err
-	}
+	c.hub.sendPlayersInfo(false)
 
 	return nil
 }
@@ -126,19 +116,23 @@ func (c *Client) handleAction(m *Message[any]) error {
 	}
 
 	switch payload.action {
-	case app.CHECK:
-		c.hub.endTurn <- struct{}{}
-
 	case app.CALL:
 		lastBet := c.hub.match.LastBet
 
 		if err := c.player.Call(lastBet); err != nil {
 			return err
 		}
-		c.hub.match.Pot = lastBet
+		c.hub.match.Pot += lastBet
 
 	case app.FOLD:
-		c.player.Fold()
+		playerSeatIdx := c.player.SeatIndex
+		var newRoundSeats []*app.Seat
+
+		for _, s := range c.hub.match.RoundSeats {
+			if s.Index != playerSeatIdx {
+				newRoundSeats = append(newRoundSeats, s)
+			}
+		}
 
 	case app.BET:
 		c.player.Bet()

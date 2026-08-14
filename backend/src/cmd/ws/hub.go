@@ -64,19 +64,19 @@ func (h *Hub) handleNextTurn() {
 	nextSeatTurn := h.match.PassTurn()
 	seatTurnMsg := newOutMessage(
 		nil,
-		"match.seat-turn",
+		MATCH_SEAT_TURN,
 		map[string]app.SeatIndex{
 			"seatIndex": nextSeatTurn.Index,
 		},
 		nil,
 	)
-
 	h.broadcast <- seatTurnMsg.asAny()
+
 	for _, c := range h.match.TableCards {
 		if c == app.BACK {
 			tableCardsMsg := newOutMessage(
 				nil,
-				"match.table-cards",
+				MATCH_TABLE_CARDS,
 				h.match.TableCards,
 				nil,
 			)
@@ -85,12 +85,21 @@ func (h *Hub) handleNextTurn() {
 			break
 		}
 	}
+	potAmountMsg := newOutMessage(
+		nil,
+		MATCH_POT_AMOUNT,
+		map[string]int{
+			"amount": c.hub.match.Pot,
+		},
+		nil,
+	)
+	c.hub.broadcast <- potAmountMsg.asAny()
+	h.sendPlayersInfo(true)
 }
 
 func (h *Hub) handleRegisterClient(c *Client) {
 	h.clients[c.addr] = c
-
-	// TODO: broadcast current players
+	h.sendPlayersInfo(true)
 }
 
 func (h *Hub) handleUnregisterClient(addr net.Addr) {
@@ -102,7 +111,7 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 	}
 	h.match.Seats[playerSeatIdx].Player = nil
 	delete(h.clients, addr)
-	// TODO: broadcast current players
+	h.sendPlayersInfo(true)
 }
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {
@@ -120,4 +129,27 @@ func (h *Hub) handleDirectMessage(dm *DirectMessage[any]) {
 		dm.message.Payload,
 		nil,
 	)
+}
+
+func (h *Hub) sendPlayersInfo(sendUserInfo bool) {
+	for _, c := range h.clients {
+		opponents := []*app.Player{}
+
+		for _, o := range h.clients {
+			if o != c {
+				opponent := &app.Player{
+					Id:        o.player.Id,
+					Name:      o.player.Name,
+					Score:     o.player.Score,
+					Cards:     [2]app.Card{app.BACK, app.BACK},
+					SeatIndex: o.player.SeatIndex,
+				}
+				opponents = append(opponents, opponent)
+			} else if sendUserInfo {
+				c.sendMessage(nil, USER_INFO, o.player, nil)
+			}
+		}
+
+		c.sendMessage(nil, OPPONENTS_INFO, opponents, nil)
+	}
 }

@@ -94,6 +94,7 @@ func (m *Match) InitRound() {
 			m.RoundSeats[i] = s
 		}
 	}
+	m.Pot = 0
 }
 
 func (m *Match) PassTurn() *Seat {
