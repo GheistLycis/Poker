@@ -7,9 +7,11 @@ import (
 type Match struct {
 	Seats      [8]*Seat
 	Pot        int
-	TableCards [3]Card
+	TableCards [5]Card
 	Deck       *map[Card]bool
 	SeatTurn   *Seat
+	LastBet    int
+	RoundSeats [8]*Seat
 }
 
 func NewMatch() *Match {
@@ -67,32 +69,48 @@ func NewMatch() *Match {
 		SPADE_12:   false,
 		SPADE_13:   false,
 	}
-	seats := [8]*Seat{
-		ZERO:  nil,
-		ONE:   nil,
-		TWO:   nil,
-		THREE: nil,
-		FOUR:  nil,
-		FIVE:  nil,
-		SIX:   nil,
-		SEVEN: nil,
-	}
+	seats := [8]*Seat{}
 	for i := range seats {
 		seats[i] = &Seat{
-			Index:  SeatIndex(i),
-			Player: nil,
+			Index: SeatIndex(i),
 		}
 	}
 
 	return &Match{
 		Seats:      seats,
-		TableCards: [3]Card{0: BACK, 1: BACK, 2: BACK},
+		TableCards: [5]Card{0: BACK, 1: BACK, 2: BACK, 3: BACK, 4: BACK},
 		Deck:       deck,
 		SeatTurn:   seats[ZERO],
+		RoundSeats: seats,
+	}
+}
+
+func (m *Match) InitRound() {
+	for i := range m.RoundSeats {
+		m.RoundSeats[i] = nil
+	}
+	for i, s := range m.Seats {
+		if s.Player != nil {
+			m.RoundSeats[i] = s
+		}
 	}
 }
 
 func (m *Match) PassTurn() *Seat {
+	var lastRoundSeat *Seat
+
+	for i := len(m.RoundSeats) - 1; i >= 0; i-- {
+		roundSeat := m.RoundSeats[i]
+
+		if roundSeat.Player != nil {
+			lastRoundSeat = roundSeat
+			break
+		}
+	}
+	if lastRoundSeat == m.SeatTurn {
+		m.InitRound()
+	}
+
 	var nextSeat *Seat
 	i := m.SeatTurn.Index + 1
 	length := len(m.Seats)

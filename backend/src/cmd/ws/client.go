@@ -32,7 +32,7 @@ func (c *Client) handleMessages() {
 		msg := &Message[any]{}
 		if err := c.conn.ReadJSON(msg); err != nil {
 			log.Printf("read error (%T): %v", err, err)
-			c.hub.unregister <- c.addr
+			c.hub.unregister <- c.addr // ? unregister only if read error == conn shut
 			return
 		}
 		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
@@ -46,6 +46,7 @@ func (c *Client) handleMessages() {
 					nil,
 					newError(fmt.Sprintf("failed to handle login: %v", err), nil),
 				)
+				c.hub.unregister <- c.conn.RemoteAddr()
 			}
 
 		case "user.action":
@@ -124,17 +125,26 @@ func (c *Client) handleAction(m *Message[any]) error {
 		return fmt.Errorf("no amount provided for action %s", payload.action)
 	}
 
-	// TODO
 	switch payload.action {
 	case app.CHECK:
+		c.hub.endTurn <- struct{}{}
 
 	case app.CALL:
+		lastBet := c.hub.match.LastBet
+
+		if err := c.player.Call(lastBet); err != nil {
+			return err
+		}
+		c.hub.match.Pot = lastBet
 
 	case app.FOLD:
+		c.player.Fold()
 
 	case app.BET:
+		c.player.Bet()
 
 	case app.RAISE:
+		c.player.Raise()
 	}
 
 	c.hub.endTurn <- struct{}{}

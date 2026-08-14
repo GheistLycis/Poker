@@ -34,6 +34,8 @@ func (h *Hub) handleTicks() {
 	turnTimer := time.NewTicker(TurnDuration)
 	defer turnTimer.Stop()
 
+	h.match.InitRound()
+
 	for {
 		select {
 		case <-turnTimer.C:
@@ -70,20 +72,37 @@ func (h *Hub) handleNextTurn() {
 	)
 
 	h.broadcast <- seatTurnMsg.asAny()
+	for _, c := range h.match.TableCards {
+		if c == app.BACK {
+			tableCardsMsg := newOutMessage(
+				nil,
+				"match.table-cards",
+				h.match.TableCards,
+				nil,
+			)
+
+			h.broadcast <- tableCardsMsg.asAny()
+			break
+		}
+	}
 }
 
 func (h *Hub) handleRegisterClient(c *Client) {
 	h.clients[c.addr] = c
+
+	// TODO: broadcast current players
 }
 
 func (h *Hub) handleUnregisterClient(addr net.Addr) {
-	playerSeat := h.clients[addr].player.SeatIndex
-	playerTurn := h.match.SeatTurn.Index
+	playerSeatIdx := h.clients[addr].player.SeatIndex
+	playerTurnIdx := h.match.SeatTurn.Index
 
-	if playerSeat == playerTurn {
+	if playerSeatIdx == playerTurnIdx {
 		h.endTurn <- struct{}{}
 	}
+	h.match.Seats[playerSeatIdx].Player = nil
 	delete(h.clients, addr)
+	// TODO: broadcast current players
 }
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {
