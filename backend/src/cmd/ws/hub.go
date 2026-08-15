@@ -2,39 +2,35 @@ package ws
 
 import (
 	"backend/src/app"
+	"log"
 	"net"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Hub struct {
-	match      *app.Match
-	clients    map[net.Addr]*Client
-	register   chan *Client
-	unregister chan net.Addr
-	broadcast  chan *Message[any]
-	direct     chan *DirectMessage[any]
-	endTurn    chan struct{}
+	match     *app.Match
+	clients   map[net.Addr]*Client
+	broadcast chan *Message[any]
+	direct    chan *DirectMessage[any]
+	endTurn   chan struct{}
 }
 
 func newHub() *Hub {
 	return &Hub{
-		match:      app.NewMatch(),
-		clients:    map[net.Addr]*Client{},
-		register:   make(chan *Client),
-		unregister: make(chan net.Addr),
-		broadcast:  make(chan *Message[any]),
-		direct:     make(chan *DirectMessage[any]),
-		endTurn:    make(chan struct{}),
+		match:     app.NewMatch(),
+		clients:   map[net.Addr]*Client{},
+		broadcast: make(chan *Message[any]),
+		direct:    make(chan *DirectMessage[any]),
+		endTurn:   make(chan struct{}),
 	}
 }
 
-var TurnDuration = 15 * time.Second
-
 func (h *Hub) handleTicks() {
-	turnTimer := time.NewTicker(TurnDuration)
+	const turnDuration = 15 * time.Second
+	turnTimer := time.NewTicker(turnDuration)
 	defer turnTimer.Stop()
-
-	h.match.InitRound()
 
 	for {
 		select {
@@ -43,13 +39,7 @@ func (h *Hub) handleTicks() {
 
 		case <-h.endTurn:
 			h.handleNextTurn()
-			turnTimer.Reset(TurnDuration)
-
-		case c := <-h.register:
-			h.handleRegisterClient(c)
-
-		case addr := <-h.unregister:
-			h.handleUnregisterClient(addr)
+			turnTimer.Reset(turnDuration)
 
 		case m := <-h.broadcast:
 			h.handleBroadcastMessage(m)
@@ -61,57 +51,65 @@ func (h *Hub) handleTicks() {
 }
 
 func (h *Hub) handleNextTurn() {
-	nextSeatTurn := h.match.PassTurn()
-	seatTurnMsg := newOutMessage(
-		nil,
-		MATCH_SEAT_TURN,
-		map[string]app.SeatIndex{
-			"seatIndex": nextSeatTurn.Index,
-		},
-		nil,
-	)
-	h.broadcast <- seatTurnMsg.asAny()
+	if len(h.match.RoundSeats) == 0 {
+		return
+	}
 
-	for _, c := range h.match.TableCards {
-		if c == app.BACK {
-			tableCardsMsg := newOutMessage(
-				nil,
-				MATCH_TABLE_CARDS,
-				h.match.TableCards,
-				nil,
-			)
-
-			h.broadcast <- tableCardsMsg.asAny()
+	var lastRoundSeat *app.Seat
+	for i := len(h.match.RoundSeats) - 1; i >= 0; i-- {
+		if roundSeat := h.match.RoundSeats[i]; roundSeat.Player != nil {
+			lastRoundSeat = roundSeat
 			break
 		}
 	}
-	potAmountMsg := newOutMessage(
-		nil,
-		MATCH_POT_AMOUNT,
-		map[string]int{
-			"amount": c.hub.match.Pot,
-		},
-		nil,
-	)
-	c.hub.broadcast <- potAmountMsg.asAny()
-	h.sendPlayersInfo(true)
+	isBettingRoundOver := lastRoundSeat == h.match.SeatTurn
+
+	if isBettingRoundOver {
+		if h.match.AllTableCardsAreRevealed() {
+			h.handleShowdown()
+			return
+		}
+		h.handleRevealNextTableCard()
+		h.match.InitRound()
+	}
+	h.handlePassTurn()
 }
 
-func (h *Hub) handleRegisterClient(c *Client) {
-	h.clients[c.addr] = c
-	h.sendPlayersInfo(true)
+func (h *Hub) handleRegisterClient(c *websocket.Conn) *Client {
+	client := newClient(c, h)
+
+	h.clients[client.addr] = client
+	log.Println("new client joined:", client.addr)
+	log.Println("current clients:", len(h.clients))
+
+	return client
 }
 
 func (h *Hub) handleUnregisterClient(addr net.Addr) {
-	playerSeatIdx := h.clients[addr].player.SeatIndex
-	playerTurnIdx := h.match.SeatTurn.Index
-
-	if playerSeatIdx == playerTurnIdx {
-		h.endTurn <- struct{}{}
+	client := h.clients[addr]
+	if client == nil {
+		return
 	}
-	h.match.Seats[playerSeatIdx].Player = nil
+	player := client.player
+	if player != nil {
+		playerSeatIdx := player.SeatIndex
+
+		h.match.Seats[playerSeatIdx].Player = nil
+		for i, s := range h.match.RoundSeats {
+			if s.Index == playerSeatIdx {
+				h.match.RoundSeats[i] = nil
+				break
+			}
+		}
+		if playerSeatIdx == h.match.SeatTurn.Index {
+			h.endTurn <- struct{}{}
+		}
+	}
 	delete(h.clients, addr)
-	h.sendPlayersInfo(true)
+	client.conn.Close()
+	h.sendPlayersInfo()
+	log.Println("client left:", addr)
+	log.Println("current clients:", len(h.clients))
 }
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {
@@ -131,25 +129,69 @@ func (h *Hub) handleDirectMessage(dm *DirectMessage[any]) {
 	)
 }
 
-func (h *Hub) sendPlayersInfo(sendUserInfo bool) {
+// TODO: active players in the round are never informed to clients
+func (h *Hub) sendPlayersInfo() {
+	loggedInClients := []*Client{}
 	for _, c := range h.clients {
-		opponents := []*app.Player{}
+		if c.player != nil {
+			loggedInClients = append(loggedInClients, c)
+		}
+	}
 
-		for _, o := range h.clients {
-			if o != c {
+	for _, c1 := range loggedInClients {
+		c1.sendMessage(nil, USER_INFO, c1.player, nil)
+
+		opponents := []*app.Player{}
+		for _, c2 := range loggedInClients {
+			if c1 != c2 {
 				opponent := &app.Player{
-					Id:        o.player.Id,
-					Name:      o.player.Name,
-					Score:     o.player.Score,
+					Id:        c2.player.Id,
+					Name:      c2.player.Name,
+					Score:     c2.player.Score,
 					Cards:     [2]app.Card{app.BACK, app.BACK},
-					SeatIndex: o.player.SeatIndex,
+					SeatIndex: c2.player.SeatIndex,
 				}
 				opponents = append(opponents, opponent)
-			} else if sendUserInfo {
-				c.sendMessage(nil, USER_INFO, o.player, nil)
 			}
 		}
-
-		c.sendMessage(nil, OPPONENTS_INFO, opponents, nil)
+		c1.sendMessage(nil, OPPONENTS_INFO, opponents, nil)
 	}
+}
+
+func (h *Hub) handlePassTurn() {
+	nextSeatToPlay := h.match.PassTurn()
+	seatTurnMsg := newOutMessage(
+		nil,
+		MATCH_SEAT_TURN,
+		map[string]app.SeatIndex{
+			"seatIndex": nextSeatToPlay.Index,
+		},
+		nil,
+	)
+	h.broadcast <- seatTurnMsg.asAny()
+}
+
+func (h *Hub) handleRevealNextTableCard() {
+	if err := h.match.RevealNextTableCard(); err != nil {
+		log.Println(err)
+		return
+	}
+	for _, c := range h.match.TableCards {
+		if c == app.BACK {
+			tableCardsMsg := newOutMessage(
+				nil,
+				MATCH_TABLE_CARDS,
+				h.match.TableCards,
+				nil,
+			)
+
+			h.broadcast <- tableCardsMsg.asAny()
+			break
+		}
+	}
+}
+
+func (h *Hub) handleShowdown() {
+	h.match.Showdown()
+	// TODO: communicate winners
 }

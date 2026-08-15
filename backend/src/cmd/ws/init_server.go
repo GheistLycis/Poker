@@ -33,12 +33,9 @@ func handleNewConn(h *Hub, u websocket.Upgrader, w http.ResponseWriter, r *http.
 	}
 	defer conn.Close()
 
-	connAddr := conn.RemoteAddr()
-	log.Println("client connected:", connAddr)
-	defer log.Println("client disconnected:", connAddr)
+	log.Println("new conn stablished:", conn.RemoteAddr())
 
-	client := newClient(conn, h)
-
-	h.register <- client
+	client := h.handleRegisterClient(conn)
+	defer h.handleUnregisterClient(client.addr)
 	client.handleMessages()
 }

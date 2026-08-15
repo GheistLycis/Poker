@@ -1,4 +1,4 @@
-import { DestroyRef, inject, Service, signal } from '@angular/core';
+import { Service, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '@env';
 import {
@@ -22,8 +22,6 @@ import { SendMessage } from './types/SendMessage';
 export class ApiService {
   private API_URL = environment.apiUrl;
 
-  private destroyRef = inject(DestroyRef);
-
   private connection$ = webSocket<ConnMessage>({
     url: this.API_URL,
     openObserver: { next: () => this.connState.set(WebSocketConnStateEnum.OPEN) },
@@ -37,11 +35,7 @@ export class ApiService {
   connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CONNECTING);
 
   constructor() {
-    this.eagerlyInitConn();
-  }
-
-  private eagerlyInitConn() {
-    this.receivedMessages$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    this.connection$.pipe(takeUntilDestroyed()).subscribe();
   }
 
   getMessages<T extends InConnMessage['type']>(type: T) {

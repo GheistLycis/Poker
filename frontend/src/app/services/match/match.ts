@@ -42,9 +42,9 @@ export class MatchService {
   registerUserAction(action: PlayerAction, amount?: number) {
     const type = 'user.action';
 
-    if (action === PlayerActionEnum.BET || action === PlayerActionEnum.RAISE) {
+    if (action === PlayerActionEnum.BET) {
       if (amount === undefined)
-        throw new Error(`Unexpected value: "amount" is necessary for ${action} action`);
+        throw new Error(`Unexpected value: "amount" cannot be undefined in a ${action} action`);
 
       return this.apiService.send({ type, payload: { action, amount } });
     }

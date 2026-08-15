@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -32,13 +31,12 @@ func (c *Client) handleMessages() {
 		msg := &Message[any]{}
 		if err := c.conn.ReadJSON(msg); err != nil {
 			log.Printf("read error (%T): %v", err, err)
-			c.hub.unregister <- c.addr // ? unregister only if read error == conn shut
-			return
+			break
 		}
 		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
 
 		switch msg.Type {
-		case "user.login":
+		case USER_LOGIN:
 			if err := c.handleLogin(msg); err != nil {
 				c.sendMessage(
 					msg.RequestId,
@@ -46,10 +44,9 @@ func (c *Client) handleMessages() {
 					nil,
 					newError(fmt.Sprintf("failed to handle login: %v", err), nil),
 				)
-				c.hub.unregister <- c.conn.RemoteAddr()
 			}
 
-		case "user.action":
+		case USER_ACTION:
 			if err := c.handleAction(msg); err != nil {
 				c.sendMessage(
 					msg.RequestId,
@@ -60,7 +57,7 @@ func (c *Client) handleMessages() {
 			}
 
 		default:
-			log.Printf("// TODO: handle message type '%s'", msg.Type)
+			log.Printf("TODO: handle message type '%s'", msg.Type)
 		}
 	}
 }
@@ -95,10 +92,25 @@ func (c *Client) handleLogin(m *Message[any]) error {
 		return errors.New("no available seats for user in this match")
 	}
 
+	match := c.hub.match
 	player := app.NewPlayer(payload.userName, availableSeat.Index)
+
 	availableSeat.Player = player
 	c.player = player
-	c.hub.sendPlayersInfo(false)
+	c.hub.sendPlayersInfo()
+	if len(match.RoundSeats) == 0 {
+		playersCount := 0
+
+		for _, s := range match.Seats {
+			if s.Player != nil {
+				playersCount++
+			}
+			if playersCount == 2 {
+				match.InitRound()
+				break
+			}
+		}
+	}
 
 	return nil
 }
@@ -111,36 +123,49 @@ func (c *Client) handleAction(m *Message[any]) error {
 	if !ok {
 		return errors.New("malformed payload")
 	}
-	if slices.Contains(app.ActionsWithAmount, payload.action) && payload.amount == nil {
-		return fmt.Errorf("no amount provided for action %s", payload.action)
-	}
+
+	match := c.hub.match
 
 	switch payload.action {
-	case app.CALL:
-		lastBet := c.hub.match.LastBet
-
-		if err := c.player.Call(lastBet); err != nil {
-			return err
+	case app.BET:
+		if payload.amount == nil {
+			return fmt.Errorf("no amount provided for bet")
 		}
-		c.hub.match.Pot += lastBet
+
+		value := *payload.amount
+
+		if value <= match.LastBet {
+			return errors.New("bets/raises are only allowed if greater than the last bet")
+		}
+		match.DoPotTransaction(value, c.player)
+		match.LastBet = value
+
+	case app.CALL:
+		match.DoPotTransaction(match.LastBet, c.player)
 
 	case app.FOLD:
 		playerSeatIdx := c.player.SeatIndex
-		var newRoundSeats []*app.Seat
+		var newRoundSeats [8]*app.Seat
 
-		for _, s := range c.hub.match.RoundSeats {
+		for i, s := range match.RoundSeats {
 			if s.Index != playerSeatIdx {
-				newRoundSeats = append(newRoundSeats, s)
+				newRoundSeats[i] = s
 			}
 		}
-
-	case app.BET:
-		c.player.Bet()
-
-	case app.RAISE:
-		c.player.Raise()
+		match.RoundSeats = newRoundSeats
 	}
-
+	if payload.action == app.BET || payload.action == app.CALL {
+		potAmountMsg := newOutMessage(
+			nil,
+			MATCH_POT_AMOUNT,
+			map[string]int{
+				"amount": match.Pot,
+			},
+			nil,
+		)
+		c.hub.broadcast <- potAmountMsg.asAny()
+	}
+	c.hub.sendPlayersInfo()
 	c.hub.endTurn <- struct{}{}
 
 	return nil

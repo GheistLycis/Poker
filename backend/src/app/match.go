@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"math/rand"
 )
 
@@ -81,8 +82,37 @@ func NewMatch() *Match {
 		TableCards: [5]Card{0: BACK, 1: BACK, 2: BACK, 3: BACK, 4: BACK},
 		Deck:       deck,
 		SeatTurn:   seats[ZERO],
-		RoundSeats: seats,
+		RoundSeats: [8]*Seat{},
 	}
+}
+
+func (m *Match) PassTurn() *Seat {
+	var nextSeat *Seat
+	i := m.SeatTurn.Index + 1
+	length := len(m.Seats)
+
+	for range length {
+		if int(i) >= length {
+			i = ZERO
+		}
+		if next := m.Seats[i]; next.Player != nil {
+			nextSeat = next
+			break
+		}
+		i++
+	}
+	m.SeatTurn = nextSeat
+
+	return nextSeat
+}
+
+func (m *Match) AllTableCardsAreRevealed() bool {
+	for _, c := range m.TableCards {
+		if c == BACK {
+			return false
+		}
+	}
+	return true
 }
 
 func (m *Match) InitRound() {
@@ -94,47 +124,21 @@ func (m *Match) InitRound() {
 			m.RoundSeats[i] = s
 		}
 	}
-	m.Pot = 0
 }
 
-func (m *Match) PassTurn() *Seat {
-	var lastRoundSeat *Seat
+func (m *Match) Showdown() []*Player {
+	winners := []*Player{}
 
-	for i := len(m.RoundSeats) - 1; i >= 0; i-- {
-		roundSeat := m.RoundSeats[i]
+	// TODO: reveal hands, resolve pot and reset lastBet, deck and table cards
 
-		if roundSeat.Player != nil {
-			lastRoundSeat = roundSeat
-			break
-		}
-	}
-	if lastRoundSeat == m.SeatTurn {
-		m.InitRound()
-	}
-
-	var nextSeat *Seat
-	i := m.SeatTurn.Index + 1
-	length := len(m.Seats)
-
-	for range length {
-		if int(i) >= length {
-			i = ZERO
-		}
-
-		next := m.Seats[i]
-
-		if next.Player != nil {
-			nextSeat = next
-			break
-		}
-		i++
-	}
-	m.SeatTurn = nextSeat
-
-	return nextSeat
+	return winners
 }
 
-func (m *Match) RevealNextTableCard() (Card, error) {
+func (m *Match) RevealNextTableCard() error {
+	if m.AllTableCardsAreRevealed() {
+		return errors.New("all table cards are already revealed")
+	}
+
 	remainingCards := []Card{}
 	for card, isRevealed := range *m.Deck {
 		if !isRevealed {
@@ -150,5 +154,23 @@ func (m *Match) RevealNextTableCard() (Card, error) {
 		}
 	}
 
-	return nextCard, nil
+	return nil
+}
+
+func (m *Match) DoPotTransaction(v int, p *Player) error {
+	if v > 0 {
+		if p.Score < v {
+			return errors.New("player has insufficient score to pay for value")
+		}
+		m.Pot += v
+		p.Score -= v
+	} else {
+		if m.Pot < v {
+			return errors.New("pot has insufficient amount to pay player")
+		}
+		m.Pot -= v
+		p.Score += v
+	}
+
+	return nil
 }

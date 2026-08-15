@@ -17,6 +17,6 @@ interface PurePayload extends Payload {
 }
 
 interface AmountPayload extends Payload {
-  action: 'BET' | 'RAISE';
+  action: 'BET';
   amount: number;
 }
