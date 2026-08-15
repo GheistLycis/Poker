@@ -2,6 +2,7 @@ package ws
 
 import (
 	"backend/src/app"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -28,12 +29,16 @@ func newClient(c *websocket.Conn, h *Hub) *Client {
 
 func (c *Client) handleMessages() {
 	for {
-		msg := &Message[any]{}
+		msg := &Message[json.RawMessage]{}
 		if err := c.conn.ReadJSON(msg); err != nil {
 			log.Printf("read error (%T): %v", err, err)
 			break
 		}
-		log.Printf("RECEIVED: type=%s payload=%+v", msg.Type, msg.Payload)
+		clientId := c.addr.String()
+		if c.player != nil {
+			clientId = c.player.Name
+		}
+		log.Printf("[CLIENT %s] received msg: type=%s payload=%s", clientId, msg.Type, msg.Payload)
 
 		switch msg.Type {
 		case USER_LOGIN:
@@ -73,12 +78,12 @@ func (c *Client) sendMessage(rId *uuid.UUID, t MessageType, p any, err *Error) e
 	return nil
 }
 
-func (c *Client) handleLogin(m *Message[any]) error {
-	payload, ok := m.Payload.(struct {
-		userName string
-	})
-	if !ok {
-		return errors.New("malformed payload")
+func (c *Client) handleLogin(m *Message[json.RawMessage]) error {
+	var payload struct {
+		UserName string `json:"userName"`
+	}
+	if err := json.Unmarshal(m.Payload, &payload); err != nil {
+		return err
 	}
 
 	var availableSeat *app.Seat
@@ -93,7 +98,7 @@ func (c *Client) handleLogin(m *Message[any]) error {
 	}
 
 	match := c.hub.match
-	player := app.NewPlayer(payload.userName, availableSeat.Index)
+	player := app.NewPlayer(payload.UserName, availableSeat.Index)
 
 	availableSeat.Player = player
 	c.player = player
@@ -115,24 +120,24 @@ func (c *Client) handleLogin(m *Message[any]) error {
 	return nil
 }
 
-func (c *Client) handleAction(m *Message[any]) error {
-	payload, ok := m.Payload.(struct {
-		action app.PlayerAction
-		amount *int
-	})
-	if !ok {
-		return errors.New("malformed payload")
+func (c *Client) handleAction(m *Message[json.RawMessage]) error {
+	var payload struct {
+		Action app.PlayerAction `json:"action"`
+		Amount *int             `json:"amount"`
+	}
+	if err := json.Unmarshal(m.Payload, &payload); err != nil {
+		return err
 	}
 
 	match := c.hub.match
 
-	switch payload.action {
+	switch payload.Action {
 	case app.BET:
-		if payload.amount == nil {
+		if payload.Amount == nil {
 			return fmt.Errorf("no amount provided for bet")
 		}
 
-		value := *payload.amount
+		value := *payload.Amount
 
 		if value <= match.LastBet {
 			return errors.New("bets/raises are only allowed if greater than the last bet")
@@ -154,7 +159,7 @@ func (c *Client) handleAction(m *Message[any]) error {
 		}
 		match.RoundSeats = newRoundSeats
 	}
-	if payload.action == app.BET || payload.action == app.CALL {
+	if payload.Action == app.BET || payload.Action == app.CALL {
 		potAmountMsg := newOutMessage(
 			nil,
 			MATCH_POT_AMOUNT,

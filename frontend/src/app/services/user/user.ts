@@ -1,7 +1,7 @@
 import { computed, inject, Service } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { User } from '@app-types/User';
+import { Player } from '@app-types/Player';
 import { ApiService } from '@services/api/api';
 import { injectLocalStorage } from 'ngxtension/inject-local-storage';
 import { filter, take, tap } from 'rxjs';
@@ -14,7 +14,7 @@ export class UserService {
   private apiService = inject(ApiService);
 
   private user$ = this.apiService.getMessages('user.info');
-  user = injectLocalStorage<User>(USER_STORAGE_KEY);
+  user = injectLocalStorage<Player>(USER_STORAGE_KEY);
   isLoggedIn = computed(() => !!this.user());
 
   constructor() {

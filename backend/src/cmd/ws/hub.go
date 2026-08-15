@@ -51,7 +51,14 @@ func (h *Hub) handleTicks() {
 }
 
 func (h *Hub) handleNextTurn() {
-	if len(h.match.RoundSeats) == 0 {
+	noSeatsInThisRound := true
+	for _, s := range h.match.RoundSeats {
+		if s != nil {
+			noSeatsInThisRound = false
+			break
+		}
+	}
+	if noSeatsInThisRound {
 		return
 	}
 
@@ -96,7 +103,7 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 
 		h.match.Seats[playerSeatIdx].Player = nil
 		for i, s := range h.match.RoundSeats {
-			if s.Index == playerSeatIdx {
+			if s != nil && s.Index == playerSeatIdx {
 				h.match.RoundSeats[i] = nil
 				break
 			}
@@ -106,7 +113,6 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 		}
 	}
 	delete(h.clients, addr)
-	client.conn.Close()
 	h.sendPlayersInfo()
 	log.Println("client left:", addr)
 	log.Println("current clients:", len(h.clients))

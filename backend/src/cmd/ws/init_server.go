@@ -32,9 +32,7 @@ func handleNewConn(h *Hub, u websocket.Upgrader, w http.ResponseWriter, r *http.
 		return
 	}
 	defer conn.Close()
-
 	log.Println("new conn stablished:", conn.RemoteAddr())
-
 	client := h.handleRegisterClient(conn)
 	defer h.handleUnregisterClient(client.addr)
 	client.handleMessages()

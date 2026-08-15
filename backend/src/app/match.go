@@ -86,6 +86,25 @@ func NewMatch() *Match {
 	}
 }
 
+func (m *Match) InitRound() {
+	for i := range m.RoundSeats {
+		m.RoundSeats[i] = nil
+	}
+	for i, s := range m.Seats {
+		if s.Player != nil {
+			m.RoundSeats[i] = s
+		}
+	}
+	for _, s := range m.RoundSeats {
+		var hand [2]Card
+
+		for i := range hand {
+			hand[i] = m.takeFromDeck()
+		}
+		s.Player.Cards = hand
+	}
+}
+
 func (m *Match) PassTurn() *Seat {
 	var nextSeat *Seat
 	i := m.SeatTurn.Index + 1
@@ -115,37 +134,12 @@ func (m *Match) AllTableCardsAreRevealed() bool {
 	return true
 }
 
-func (m *Match) InitRound() {
-	for i := range m.RoundSeats {
-		m.RoundSeats[i] = nil
-	}
-	for i, s := range m.Seats {
-		if s.Player != nil {
-			m.RoundSeats[i] = s
-		}
-	}
-}
-
-func (m *Match) Showdown() []*Player {
-	winners := []*Player{}
-
-	// TODO: reveal hands, resolve pot and reset lastBet, deck and table cards
-
-	return winners
-}
-
 func (m *Match) RevealNextTableCard() error {
 	if m.AllTableCardsAreRevealed() {
 		return errors.New("all table cards are already revealed")
 	}
 
-	remainingCards := []Card{}
-	for card, isRevealed := range *m.Deck {
-		if !isRevealed {
-			remainingCards = append(remainingCards, card)
-		}
-	}
-	nextCard := remainingCards[rand.Intn(len(remainingCards))]
+	nextCard := m.takeFromDeck()
 
 	(*m.Deck)[nextCard] = true
 	for i, card := range m.TableCards {
@@ -155,6 +149,20 @@ func (m *Match) RevealNextTableCard() error {
 	}
 
 	return nil
+}
+
+func (m *Match) takeFromDeck() Card {
+	remainingCards := []Card{}
+	for card, isRevealed := range *m.Deck {
+		if !isRevealed {
+			remainingCards = append(remainingCards, card)
+		}
+	}
+	nextCard := remainingCards[rand.Intn(len(remainingCards))]
+
+	(*m.Deck)[nextCard] = true
+
+	return nextCard
 }
 
 func (m *Match) DoPotTransaction(v int, p *Player) error {
@@ -173,4 +181,12 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 	}
 
 	return nil
+}
+
+func (m *Match) Showdown() []*Player {
+	winners := []*Player{}
+
+	// TODO: reveal hands, resolve pot and reset lastBet, deck and table cards
+
+	return winners
 }
