@@ -10,12 +10,14 @@ import (
 )
 
 type Hub struct {
-	match     *app.Match
-	clients   map[net.Addr]*Client
-	broadcast chan *Message[any]
-	direct    chan *DirectMessage[any]
-	endTurn   chan struct{}
+	turnTicker *time.Ticker
+	match      *app.Match
+	clients    map[net.Addr]*Client
+	broadcast  chan *Message[any]
+	direct     chan *DirectMessage[any]
 }
+
+const TurnDuration = 15 * time.Second
 
 func newHub() *Hub {
 	return &Hub{
@@ -23,23 +25,18 @@ func newHub() *Hub {
 		clients:   map[net.Addr]*Client{},
 		broadcast: make(chan *Message[any]),
 		direct:    make(chan *DirectMessage[any]),
-		endTurn:   make(chan struct{}),
 	}
 }
 
 func (h *Hub) handleTicks() {
-	const turnDuration = 15 * time.Second
-	turnTimer := time.NewTicker(turnDuration)
+	turnTimer := time.NewTicker(TurnDuration)
 	defer turnTimer.Stop()
 
+	h.turnTicker = turnTimer
 	for {
 		select {
 		case <-turnTimer.C:
-			h.endTurn <- struct{}{}
-
-		case <-h.endTurn:
-			h.handleNextTurn()
-			turnTimer.Reset(turnDuration)
+			h.handleEndTurn()
 
 		case m := <-h.broadcast:
 			h.handleBroadcastMessage(m)
@@ -50,15 +47,9 @@ func (h *Hub) handleTicks() {
 	}
 }
 
-func (h *Hub) handleNextTurn() {
-	noSeatsInThisRound := true
-	for _, s := range h.match.RoundSeats {
-		if s != nil {
-			noSeatsInThisRound = false
-			break
-		}
-	}
-	if noSeatsInThisRound {
+func (h *Hub) handleEndTurn() {
+	h.turnTicker.Reset(TurnDuration)
+	if h.match.RoundSeats == [8]*app.Seat{} {
 		return
 	}
 
@@ -86,8 +77,7 @@ func (h *Hub) handleRegisterClient(c *websocket.Conn) *Client {
 	client := newClient(c, h)
 
 	h.clients[client.addr] = client
-	log.Println("new client joined:", client.addr)
-	log.Println("current clients:", len(h.clients))
+	log.Printf("client registered: %s (current clients = %d)", client.addr, len(h.clients))
 
 	return client
 }
@@ -109,13 +99,16 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 			}
 		}
 		if playerSeatIdx == h.match.SeatTurn.Index {
-			h.endTurn <- struct{}{}
+			h.handleEndTurn()
 		}
 	}
 	delete(h.clients, addr)
 	h.sendPlayersInfo()
-	log.Println("client left:", addr)
-	log.Println("current clients:", len(h.clients))
+	playerName := "N/A"
+	if player != nil {
+		playerName = player.Name
+	}
+	log.Printf("client '%s (%s)' unregistered (current clients = %d)", addr, playerName, len(h.clients))
 }
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {
@@ -145,12 +138,19 @@ func (h *Hub) sendPlayersInfo() {
 	}
 
 	for _, c1 := range loggedInClients {
-		c1.sendMessage(nil, USER_INFO, c1.player, nil)
+		user := &Player{
+			Id:        c1.player.Id,
+			Name:      c1.player.Name,
+			Score:     c1.player.Score,
+			Cards:     c1.player.Cards,
+			SeatIndex: c1.player.SeatIndex,
+		}
+		c1.sendMessage(nil, USER_INFO, user, nil)
 
-		opponents := []*app.Player{}
+		var opponents []*Player
 		for _, c2 := range loggedInClients {
 			if c1 != c2 {
-				opponent := &app.Player{
+				opponent := &Player{
 					Id:        c2.player.Id,
 					Name:      c2.player.Name,
 					Score:     c2.player.Score,
