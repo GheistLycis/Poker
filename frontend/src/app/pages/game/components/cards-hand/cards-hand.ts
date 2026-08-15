@@ -3,11 +3,10 @@ import { Component, inject, input } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { CardEnum, Card as CardType } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
-import { Opponent } from '@app-types/Opponent';
-import { User } from '@app-types/User';
+import { Player } from '@app-types/Player';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
-import { interval, map, switchMap, takeWhile } from 'rxjs';
+import { filter, interval, map, switchMap, takeWhile } from 'rxjs';
 import { Card } from '../card/card';
 
 @Component({
@@ -22,11 +21,12 @@ export class CardsHand {
   userService = inject(UserService);
   matchService = inject(MatchService);
 
-  player = input.required<User | Opponent>();
+  player = input.required<Player>();
   isUser = input.required<boolean>();
 
   // APPLYING "PUSH EACH CARD TO HAND" EFFECT
   cards$ = toObservable(this.player).pipe(
+    filter(({ cards }) => !!cards.length),
     switchMap(({ cards }) =>
       interval(200).pipe(
         takeWhile((cardCount) => cardCount < 2, true),

@@ -3,22 +3,18 @@ package app
 /*
 const (
 
-	CHECK PlayerAction = "CHECK"
-	CALL  PlayerAction = "CALL"
-	FOLD  PlayerAction = "FOLD"
 	BET   PlayerAction = "BET"
-	RAISE PlayerAction = "RAISE"
+	CALL  PlayerAction = "CALL"
+	CHECK PlayerAction = "CHECK"
+	FOLD  PlayerAction = "FOLD"
 
 )
 */
 type PlayerAction string
 
 const (
-	CHECK PlayerAction = "CHECK"
-	CALL  PlayerAction = "CALL"
-	FOLD  PlayerAction = "FOLD"
 	BET   PlayerAction = "BET"
-	RAISE PlayerAction = "RAISE"
+	CALL  PlayerAction = "CALL"
+	CHECK PlayerAction = "CHECK"
+	FOLD  PlayerAction = "FOLD"
 )
-
-var ActionsWithAmount = []PlayerAction{BET, RAISE}

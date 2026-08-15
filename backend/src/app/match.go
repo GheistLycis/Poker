@@ -1,15 +1,18 @@
 package app
 
 import (
+	"errors"
 	"math/rand"
 )
 
 type Match struct {
 	Seats      [8]*Seat
 	Pot        int
-	TableCards [3]Card
+	TableCards [5]Card
 	Deck       *map[Card]bool
-	seatTurn   *Seat
+	SeatTurn   *Seat
+	LastBet    int
+	RoundSeats [8]*Seat
 }
 
 func NewMatch() *Match {
@@ -67,55 +70,88 @@ func NewMatch() *Match {
 		SPADE_12:   false,
 		SPADE_13:   false,
 	}
-	seats := [8]*Seat{
-		ZERO:  nil,
-		ONE:   nil,
-		TWO:   nil,
-		THREE: nil,
-		FOUR:  nil,
-		FIVE:  nil,
-		SIX:   nil,
-		SEVEN: nil,
-	}
+	seats := [8]*Seat{}
 	for i := range seats {
 		seats[i] = &Seat{
-			Index:  SeatIndex(i),
-			Player: nil,
+			Index: SeatIndex(i),
 		}
 	}
 
 	return &Match{
 		Seats:      seats,
-		TableCards: [3]Card{0: BACK, 1: BACK, 2: BACK},
+		TableCards: [5]Card{0: BACK, 1: BACK, 2: BACK, 3: BACK, 4: BACK},
 		Deck:       deck,
-		seatTurn:   seats[ZERO],
+		SeatTurn:   seats[ZERO],
+		RoundSeats: [8]*Seat{},
+	}
+}
+
+func (m *Match) InitRound() {
+	for i := range m.RoundSeats {
+		m.RoundSeats[i] = nil
+	}
+	for i, s := range m.Seats {
+		if s.Player != nil {
+			m.RoundSeats[i] = s
+		}
+	}
+	for _, s := range m.RoundSeats {
+		var hand [2]Card
+
+		for i := range hand {
+			hand[i] = m.takeFromDeck()
+		}
+		s.Player.Cards = hand
 	}
 }
 
 func (m *Match) PassTurn() *Seat {
 	var nextSeat *Seat
-	i := m.seatTurn.Index + 1
+	i := m.SeatTurn.Index + 1
 	length := len(m.Seats)
 
 	for range length {
 		if int(i) >= length {
 			i = ZERO
 		}
-
-		next := m.Seats[i]
-
-		if next.Player != nil {
+		if next := m.Seats[i]; next.Player != nil {
 			nextSeat = next
 			break
 		}
 		i++
 	}
-	m.seatTurn = nextSeat
+	m.SeatTurn = nextSeat
 
 	return nextSeat
 }
 
-func (m *Match) RevealNextTableCard() (Card, error) {
+func (m *Match) AllTableCardsAreRevealed() bool {
+	for _, c := range m.TableCards {
+		if c == BACK {
+			return false
+		}
+	}
+	return true
+}
+
+func (m *Match) RevealNextTableCard() error {
+	if m.AllTableCardsAreRevealed() {
+		return errors.New("all table cards are already revealed")
+	}
+
+	nextCard := m.takeFromDeck()
+
+	(*m.Deck)[nextCard] = true
+	for i, card := range m.TableCards {
+		if card == BACK {
+			m.TableCards[i] = nextCard
+		}
+	}
+
+	return nil
+}
+
+func (m *Match) takeFromDeck() Card {
 	remainingCards := []Card{}
 	for card, isRevealed := range *m.Deck {
 		if !isRevealed {
@@ -125,11 +161,32 @@ func (m *Match) RevealNextTableCard() (Card, error) {
 	nextCard := remainingCards[rand.Intn(len(remainingCards))]
 
 	(*m.Deck)[nextCard] = true
-	for i, card := range m.TableCards {
-		if card == BACK {
-			m.TableCards[i] = nextCard
+
+	return nextCard
+}
+
+func (m *Match) DoPotTransaction(v int, p *Player) error {
+	if v > 0 {
+		if p.Score < v {
+			return errors.New("player has insufficient score to pay for value")
 		}
+		m.Pot += v
+		p.Score -= v
+	} else {
+		if m.Pot < v {
+			return errors.New("pot has insufficient amount to pay player")
+		}
+		m.Pot -= v
+		p.Score += v
 	}
 
-	return nextCard, nil
+	return nil
+}
+
+func (m *Match) Showdown() []*Player {
+	winners := []*Player{}
+
+	// TODO: reveal hands, resolve pot and reset lastBet, deck and table cards
+
+	return winners
 }

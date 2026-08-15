@@ -1,13 +1,13 @@
 package ws
 
 type Error struct {
-	message string
-	details any
+	Message string `json:"message"`
+	Details any    `json:"details"`
 }
 
 func newError(m string, d any) *Error {
 	return &Error{
-		message: m,
-		details: d,
+		Message: m,
+		Details: d,
 	}
 }

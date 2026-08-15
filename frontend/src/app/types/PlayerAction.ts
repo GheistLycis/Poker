@@ -1,8 +1,7 @@
 export const PlayerActionEnum = {
-  CHECK: 'CHECK',
   BET: 'BET',
   CALL: 'CALL',
-  RAISE: 'RAISE',
+  CHECK: 'CHECK',
   FOLD: 'FOLD',
 } as const;
 

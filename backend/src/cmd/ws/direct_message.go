@@ -11,7 +11,7 @@ type DirectMessage[T any] struct {
 	message *Message[T]
 }
 
-func newDirectMessage[T any](c net.Addr, rId *uuid.UUID, t string, p T, err *Error) *DirectMessage[T] {
+func newDirectMessage[T any](c net.Addr, rId *uuid.UUID, t MessageType, p T, err *Error) *DirectMessage[T] {
 	return &DirectMessage[T]{
 		conn:    c,
 		message: newOutMessage(rId, t, p, err),
