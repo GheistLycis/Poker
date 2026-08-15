@@ -168,10 +168,10 @@ func (c *Client) handleAction(m *Message[json.RawMessage]) error {
 			},
 			nil,
 		)
-		c.hub.broadcast <- potAmountMsg.asAny()
+		c.hub.broadcast(potAmountMsg.asAny())
 	}
 	c.hub.sendPlayersInfo()
-	c.hub.handleEndTurn()
+	c.hub.endTurn()
 
 	return nil
 }

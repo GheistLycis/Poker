@@ -13,42 +13,28 @@ type Hub struct {
 	turnTicker *time.Ticker
 	match      *app.Match
 	clients    map[net.Addr]*Client
-	broadcast  chan *Message[any]
-	direct     chan *DirectMessage[any]
 }
 
 const TurnDuration = 15 * time.Second
 
 func newHub() *Hub {
 	return &Hub{
-		match:     app.NewMatch(),
-		clients:   map[net.Addr]*Client{},
-		broadcast: make(chan *Message[any]),
-		direct:    make(chan *DirectMessage[any]),
+		match:   app.NewMatch(),
+		clients: map[net.Addr]*Client{},
 	}
 }
 
 func (h *Hub) handleTicks() {
-	turnTimer := time.NewTicker(TurnDuration)
-	defer turnTimer.Stop()
+	turnTicker := time.NewTicker(TurnDuration)
+	defer turnTicker.Stop()
 
-	h.turnTicker = turnTimer
-	for {
-		select {
-		case <-turnTimer.C:
-			h.handleEndTurn()
-
-		case m := <-h.broadcast:
-			h.handleBroadcastMessage(m)
-
-		case dm := <-h.direct:
-			h.handleDirectMessage(dm)
-		}
+	h.turnTicker = turnTicker
+	for range h.turnTicker.C {
+		h.endTurn()
 	}
 }
 
-func (h *Hub) handleEndTurn() {
-	h.turnTicker.Reset(TurnDuration)
+func (h *Hub) endTurn() {
 	if h.match.RoundSeats == [8]*app.Seat{} {
 		return
 	}
@@ -64,16 +50,16 @@ func (h *Hub) handleEndTurn() {
 
 	if isBettingRoundOver {
 		if h.match.AllTableCardsAreRevealed() {
-			h.handleShowdown()
-			return
+			h.showdown()
 		}
-		h.handleRevealNextTableCard()
 		h.match.InitRound()
+		h.revealNextTableCard()
 	}
-	h.handlePassTurn()
+	h.passTurn()
+	h.turnTicker.Reset(TurnDuration)
 }
 
-func (h *Hub) handleRegisterClient(c *websocket.Conn) *Client {
+func (h *Hub) registerClient(c *websocket.Conn) *Client {
 	client := newClient(c, h)
 
 	h.clients[client.addr] = client
@@ -82,7 +68,7 @@ func (h *Hub) handleRegisterClient(c *websocket.Conn) *Client {
 	return client
 }
 
-func (h *Hub) handleUnregisterClient(addr net.Addr) {
+func (h *Hub) unregisterClient(addr net.Addr) {
 	client := h.clients[addr]
 	if client == nil {
 		return
@@ -99,7 +85,7 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 			}
 		}
 		if playerSeatIdx == h.match.SeatTurn.Index {
-			h.handleEndTurn()
+			h.endTurn()
 		}
 	}
 	delete(h.clients, addr)
@@ -111,21 +97,10 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 	log.Printf("client '%s (%s)' unregistered (current clients = %d)", addr, playerName, len(h.clients))
 }
 
-func (h *Hub) handleBroadcastMessage(m *Message[any]) {
+func (h *Hub) broadcast(m *Message[any]) {
 	for _, c := range h.clients {
 		c.sendMessage(m.RequestId, m.Type, m.Payload, nil)
 	}
-}
-
-func (h *Hub) handleDirectMessage(dm *DirectMessage[any]) {
-	client := h.clients[dm.conn]
-
-	client.sendMessage(
-		dm.message.RequestId,
-		dm.message.Type,
-		dm.message.Payload,
-		nil,
-	)
 }
 
 // TODO: active players in the round are never informed to clients
@@ -164,7 +139,7 @@ func (h *Hub) sendPlayersInfo() {
 	}
 }
 
-func (h *Hub) handlePassTurn() {
+func (h *Hub) passTurn() {
 	nextSeatToPlay := h.match.PassTurn()
 	seatTurnMsg := newOutMessage(
 		nil,
@@ -174,10 +149,10 @@ func (h *Hub) handlePassTurn() {
 		},
 		nil,
 	)
-	h.broadcast <- seatTurnMsg.asAny()
+	h.broadcast(seatTurnMsg.asAny())
 }
 
-func (h *Hub) handleRevealNextTableCard() {
+func (h *Hub) revealNextTableCard() {
 	if err := h.match.RevealNextTableCard(); err != nil {
 		log.Println(err)
 		return
@@ -191,13 +166,13 @@ func (h *Hub) handleRevealNextTableCard() {
 				nil,
 			)
 
-			h.broadcast <- tableCardsMsg.asAny()
+			h.broadcast(tableCardsMsg.asAny())
 			break
 		}
 	}
 }
 
-func (h *Hub) handleShowdown() {
+func (h *Hub) showdown() {
 	h.match.Showdown()
 	// TODO: communicate winners
 }
