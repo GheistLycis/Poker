@@ -103,7 +103,7 @@ func (c *Client) handleLogin(m *Message[json.RawMessage]) error {
 	availableSeat.Player = player
 	c.player = player
 	c.hub.sendPlayersInfo()
-	if len(match.RoundSeats) == 0 {
+	if match.RoundSeats == [8]*app.Seat{} {
 		playersCount := 0
 
 		for _, s := range match.Seats {
@@ -171,7 +171,7 @@ func (c *Client) handleAction(m *Message[json.RawMessage]) error {
 		c.hub.broadcast <- potAmountMsg.asAny()
 	}
 	c.hub.sendPlayersInfo()
-	c.hub.endTurn <- struct{}{}
+	c.hub.handleEndTurn()
 
 	return nil
 }
