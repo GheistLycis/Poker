@@ -86,8 +86,7 @@ func (h *Hub) handleRegisterClient(c *websocket.Conn) *Client {
 	client := newClient(c, h)
 
 	h.clients[client.addr] = client
-	log.Println("new client joined:", client.addr)
-	log.Println("current clients:", len(h.clients))
+	log.Printf("client registered: %s (current clients = %d)", client.addr, len(h.clients))
 
 	return client
 }
@@ -114,8 +113,11 @@ func (h *Hub) handleUnregisterClient(addr net.Addr) {
 	}
 	delete(h.clients, addr)
 	h.sendPlayersInfo()
-	log.Println("client left:", addr)
-	log.Println("current clients:", len(h.clients))
+	playerName := "N/A"
+	if player != nil {
+		playerName = player.Name
+	}
+	log.Printf("client '%s (%s)' unregistered (current clients = %d)", addr, playerName, len(h.clients))
 }
 
 func (h *Hub) handleBroadcastMessage(m *Message[any]) {

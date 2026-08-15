@@ -78,11 +78,9 @@ func NewMatch() *Match {
 	}
 
 	return &Match{
-		Seats:      seats,
-		TableCards: [5]Card{0: BACK, 1: BACK, 2: BACK, 3: BACK, 4: BACK},
-		Deck:       deck,
-		SeatTurn:   seats[ZERO],
-		RoundSeats: [8]*Seat{},
+		Seats:    seats,
+		Deck:     deck,
+		SeatTurn: seats[ZERO],
 	}
 }
 
@@ -103,6 +101,7 @@ func (m *Match) InitRound() {
 		}
 		s.Player.Cards = hand
 	}
+	m.TableCards = [5]Card{BACK, BACK, BACK, BACK, BACK}
 }
 
 func (m *Match) PassTurn() *Seat {
