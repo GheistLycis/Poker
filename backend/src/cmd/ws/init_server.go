@@ -14,13 +14,14 @@ func InitServer(r string, p int) {
 			return true // TODO
 		},
 	}
-	hub := newHub()
-	port := ":" + fmt.Sprintf("%d", p)
 
+	hub := newHub()
 	go hub.handleTicks()
 	http.HandleFunc(r, func(w http.ResponseWriter, r *http.Request) {
 		handleNewConn(hub, upgrader, w, r)
 	})
+
+	port := ":" + fmt.Sprintf("%d", p)
 	log.Println("Server started on " + port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
