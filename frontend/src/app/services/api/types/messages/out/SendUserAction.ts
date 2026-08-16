@@ -1,5 +1,5 @@
-import { PlayerAction } from '@app-types/PlayerAction';
-import { WebSocketOutgoingMessage } from './WebSocketOutgoingMessage';
+import type { PlayerAction } from '@app-types/PlayerAction';
+import type { WebSocketOutgoingMessage } from './WebSocketOutgoingMessage';
 
 export interface SendUserAction extends WebSocketOutgoingMessage {
   type: 'user.action';

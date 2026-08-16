@@ -1,5 +1,6 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { PlayerAction } from '@app-types/PlayerAction';
+import type { PipeTransform } from '@angular/core';
+import { Pipe } from '@angular/core';
+import type { PlayerAction } from '@app-types/PlayerAction';
 
 const LABELS: Record<PlayerAction, string> = {
   BET: 'Apostar',

@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { IsFieldInvalidPipe } from '@pipes/is-field-invalid/is-field-invalid-pipe';
 import { UserService } from '@services/user/user';
 import { firstValueFrom, map } from 'rxjs';
-import { LoginFormData } from './types/LoginFormData';
+import type { LoginFormData } from './types/LoginFormData';
 
 @Component({
   selector: 'app-login',

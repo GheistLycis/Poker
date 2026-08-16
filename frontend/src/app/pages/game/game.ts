@@ -6,7 +6,7 @@ import { Table } from '@components/table/table';
 import { User } from '@components/user/user';
 import { MatchService } from '@services/match/match';
 import { map } from 'rxjs';
-import { OpponentSeat } from './types/OpponentSeat';
+import type { OpponentSeat } from './types/OpponentSeat';
 
 @Component({
   selector: 'app-game',

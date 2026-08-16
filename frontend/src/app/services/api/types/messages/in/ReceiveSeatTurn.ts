@@ -1,4 +1,4 @@
-import { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
+import type { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
 
 export interface ReceiveSeatTurn extends WebSocketIncomingMessage {
   type: 'match.seat-turn';

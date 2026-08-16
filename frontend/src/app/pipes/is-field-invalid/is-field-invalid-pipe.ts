@@ -1,5 +1,6 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { FieldState } from '@angular/forms/signals';
+import type { PipeTransform } from '@angular/core';
+import { Pipe } from '@angular/core';
+import type { FieldState } from '@angular/forms/signals';
 
 @Pipe({ name: 'isFieldInvalid', pure: false })
 export class IsFieldInvalidPipe implements PipeTransform {

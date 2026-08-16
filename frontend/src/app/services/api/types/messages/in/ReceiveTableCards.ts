@@ -1,5 +1,5 @@
-import { Card } from '@app-types/Card';
-import { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
+import type { Card } from '@app-types/Card';
+import type { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
 
 export interface ReceiveTableCards extends WebSocketIncomingMessage {
   type: 'match.table-cards';

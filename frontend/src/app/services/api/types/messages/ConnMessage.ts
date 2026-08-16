@@ -1,15 +1,15 @@
-import { ReceiveOpponentAction } from './in/ReceiveOpponentAction';
-import { ReceiveOpponentsHands } from './in/ReceiveOpponentsHands';
-import { ReceiveOpponentsInfo } from './in/ReceiveOpponentsInfo';
-import { ReceivePotAmount } from './in/ReceivePotAmount';
-import { ReceiveSeats } from './in/ReceiveSeats';
-import { ReceiveSeatTurn } from './in/ReceiveSeatTurn';
-import { ReceiveTableCards } from './in/ReceiveTableCards';
-import { ReceiveUserInfo } from './in/ReceiveUserInfo';
-import { ReceiveWinner } from './in/ReceiveWinner';
-import { SendUserAction } from './out/SendUserAction';
-import { SendUserEmote } from './out/SendUserEmote';
-import { SendUserLogin } from './out/SendUserLogin';
+import type { ReceiveOpponentAction } from './in/ReceiveOpponentAction';
+import type { ReceiveOpponentsHands } from './in/ReceiveOpponentsHands';
+import type { ReceiveOpponentsInfo } from './in/ReceiveOpponentsInfo';
+import type { ReceivePotAmount } from './in/ReceivePotAmount';
+import type { ReceiveSeats } from './in/ReceiveSeats';
+import type { ReceiveSeatTurn } from './in/ReceiveSeatTurn';
+import type { ReceiveTableCards } from './in/ReceiveTableCards';
+import type { ReceiveUserInfo } from './in/ReceiveUserInfo';
+import type { ReceiveWinner } from './in/ReceiveWinner';
+import type { SendUserAction } from './out/SendUserAction';
+import type { SendUserEmote } from './out/SendUserEmote';
+import type { SendUserLogin } from './out/SendUserLogin';
 
 export type InConnMessage =
   | ReceiveOpponentAction

@@ -1,8 +1,9 @@
 import { computed, inject, Service } from '@angular/core';
-import { PlayerAction, PlayerActionEnum } from '@app-types/PlayerAction';
+import type { PlayerAction} from '@app-types/PlayerAction';
+import { PlayerActionEnum } from '@app-types/PlayerAction';
 import { ApiService } from '@services/api/api';
 import { WebSocketConnStateEnum } from '@services/api/types/ConnState';
-import { ReceiveOpponentsHands } from '@services/api/types/messages/in/ReceiveOpponentsHands';
+import type { ReceiveOpponentsHands } from '@services/api/types/messages/in/ReceiveOpponentsHands';
 import { map, shareReplay, startWith } from 'rxjs';
 import { combineLatest } from 'rxjs/internal/observable/combineLatest';
 

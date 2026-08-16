@@ -1,9 +1,10 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { CardEnum, Card as CardType } from '@app-types/Card';
+import type { Card as CardType } from '@app-types/Card';
+import { CardEnum } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
-import { Player } from '@app-types/Player';
+import type { Player } from '@app-types/Player';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
 import { filter, interval, map, switchMap, takeWhile } from 'rxjs';

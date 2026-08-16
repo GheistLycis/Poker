@@ -1,27 +1,19 @@
 import { Service, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '@env';
-import {
-  filter,
-  map,
-  Observable,
-  of,
-  retry,
-  shareReplay,
-  switchMap,
-  take,
-  throwError,
-  timer,
-} from 'rxjs';
+import type { Observable } from 'rxjs';
+import { filter, map, of, retry, shareReplay, switchMap, take, throwError, timer } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
-import { WebSocketConnState, WebSocketConnStateEnum } from './types/ConnState';
-import { ConnMessage, InConnMessage } from './types/messages/ConnMessage';
-import { SendMessage } from './types/SendMessage';
+import type { WebSocketConnState } from './types/ConnState';
+import { WebSocketConnStateEnum } from './types/ConnState';
+import type { ConnMessage, InConnMessage } from './types/messages/ConnMessage';
+import type { SendMessage } from './types/SendMessage';
 
 @Service()
 export class ApiService {
   private API_URL = environment.apiUrl;
 
+  connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CONNECTING);
   private connection$ = webSocket<ConnMessage>({
     url: this.API_URL,
     openObserver: { next: () => this.connState.set(WebSocketConnStateEnum.OPEN) },
@@ -30,12 +22,11 @@ export class ApiService {
   readonly receivedMessages$ = this.connection$.pipe(
     retry({ delay: (_, count) => timer(Math.min(1000 * 2 ** count, 30_000)) }),
     filter((msg) => msg.origin === 'SERVER'),
-    shareReplay({ bufferSize: 1, refCount: false }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
-  connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CONNECTING);
 
   constructor() {
-    this.connection$.pipe(takeUntilDestroyed()).subscribe();
+    this.receivedMessages$.pipe(takeUntilDestroyed()).subscribe();
   }
 
   getMessages<T extends InConnMessage['type']>(type: T) {
@@ -57,9 +48,5 @@ export class ApiService {
       take(1),
       switchMap((msg) => (msg.error ? throwError(() => msg.error) : of(msg))),
     );
-  }
-
-  close(): void {
-    this.connection$.complete();
   }
 }

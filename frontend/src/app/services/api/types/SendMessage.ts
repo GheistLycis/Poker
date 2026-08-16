@@ -1,4 +1,4 @@
-import { OutConnMessage } from './messages/ConnMessage';
+import type { OutConnMessage } from './messages/ConnMessage';
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
