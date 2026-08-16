@@ -153,7 +153,7 @@ func (c *Client) handleAction(m *Message[json.RawMessage]) error {
 		var newRoundSeats [8]*app.Seat
 
 		for i, s := range match.RoundSeats {
-			if s.Index != playerSeatIdx {
+			if s != nil && s.Index != playerSeatIdx {
 				newRoundSeats[i] = s
 			}
 		}
@@ -170,7 +170,6 @@ func (c *Client) handleAction(m *Message[json.RawMessage]) error {
 		)
 		c.hub.broadcast(potAmountMsg.asAny())
 	}
-	c.hub.sendPlayersInfo()
 	c.hub.endTurn()
 
 	return nil

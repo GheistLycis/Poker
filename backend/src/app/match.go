@@ -78,13 +78,20 @@ func NewMatch() *Match {
 	}
 
 	return &Match{
-		Seats:    seats,
-		Deck:     deck,
-		SeatTurn: seats[ZERO],
+		Seats: seats,
+		Deck:  deck,
 	}
 }
 
 func (m *Match) InitRound() {
+	m.LastBet = 0
+	for card := range *m.Deck {
+		(*m.Deck)[card] = false
+	}
+	m.TableCards = [5]Card{BACK, BACK, BACK, BACK, BACK}
+	for range 3 {
+		m.RevealNextTableCard()
+	}
 	for i := range m.RoundSeats {
 		m.RoundSeats[i] = nil
 	}
@@ -94,6 +101,10 @@ func (m *Match) InitRound() {
 		}
 	}
 	for _, s := range m.RoundSeats {
+		if s == nil || s.Player == nil {
+			continue
+		}
+
 		var hand [2]Card
 
 		for i := range hand {
@@ -101,23 +112,20 @@ func (m *Match) InitRound() {
 		}
 		s.Player.Cards = hand
 	}
-	m.TableCards = [5]Card{BACK, BACK, BACK, BACK, BACK}
+	m.SeatTurn = m.RoundSeats[0]
 }
 
 func (m *Match) PassTurn() *Seat {
 	var nextSeat *Seat
-	i := m.SeatTurn.Index + 1
-	length := len(m.Seats)
+	var currentRoundSeatIdx int
+	n := len(m.RoundSeats)
 
-	for range length {
-		if int(i) >= length {
-			i = ZERO
-		}
-		if next := m.Seats[i]; next.Player != nil {
+	for i := 1; i <= n; i++ {
+		next := m.RoundSeats[(currentRoundSeatIdx+i)%n]
+		if next != nil && next.Player != nil {
 			nextSeat = next
 			break
 		}
-		i++
 	}
 	m.SeatTurn = nextSeat
 
@@ -140,10 +148,10 @@ func (m *Match) RevealNextTableCard() error {
 
 	nextCard := m.takeFromDeck()
 
-	(*m.Deck)[nextCard] = true
 	for i, card := range m.TableCards {
 		if card == BACK {
 			m.TableCards[i] = nextCard
+			break
 		}
 	}
 
@@ -172,11 +180,12 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 		m.Pot += v
 		p.Score -= v
 	} else {
-		if m.Pot < v {
+		value := -v
+		if m.Pot < value {
 			return errors.New("pot has insufficient amount to pay player")
 		}
-		m.Pot -= v
-		p.Score += v
+		m.Pot -= value
+		p.Score += value
 	}
 
 	return nil
@@ -185,7 +194,7 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 func (m *Match) Showdown() []*Player {
 	winners := []*Player{}
 
-	// TODO: reveal hands, resolve pot and reset lastBet, deck and table cards
+	// TODO: reveal hands and resolve pot
 
 	return winners
 }

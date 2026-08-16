@@ -35,13 +35,16 @@ func (h *Hub) handleTicks() {
 }
 
 func (h *Hub) endTurn() {
+	h.turnTicker.Reset(TurnDuration)
+
 	if h.match.RoundSeats == [8]*app.Seat{} {
 		return
 	}
 
 	var lastRoundSeat *app.Seat
 	for i := len(h.match.RoundSeats) - 1; i >= 0; i-- {
-		if roundSeat := h.match.RoundSeats[i]; roundSeat.Player != nil {
+		roundSeat := h.match.RoundSeats[i]
+		if roundSeat != nil && roundSeat.Player != nil {
 			lastRoundSeat = roundSeat
 			break
 		}
@@ -51,11 +54,15 @@ func (h *Hub) endTurn() {
 	if isBettingRoundOver {
 		if h.match.AllTableCardsAreRevealed() {
 			h.showdown()
+			h.initRound()
+		} else {
+			h.revealNextTableCard()
+			h.passTurn()
 		}
-		h.match.InitRound()
-		h.revealNextTableCard()
+	} else {
+		h.passTurn()
 	}
-	h.passTurn()
+	h.sendPlayersInfo()
 	h.turnTicker.Reset(TurnDuration)
 }
 
@@ -84,7 +91,7 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 				break
 			}
 		}
-		if playerSeatIdx == h.match.SeatTurn.Index {
+		if h.match.SeatTurn != nil && playerSeatIdx == h.match.SeatTurn.Index {
 			h.endTurn()
 		}
 	}
@@ -105,7 +112,7 @@ func (h *Hub) broadcast(m *Message[any]) {
 
 // TODO: active players in the round are never informed to clients
 func (h *Hub) sendPlayersInfo() {
-	loggedInClients := []*Client{}
+	var loggedInClients []*Client
 	for _, c := range h.clients {
 		if c.player != nil {
 			loggedInClients = append(loggedInClients, c)
@@ -139,6 +146,18 @@ func (h *Hub) sendPlayersInfo() {
 	}
 }
 
+func (h *Hub) initRound() {
+	h.match.InitRound()
+	tableCardsMsg := newOutMessage(
+		nil,
+		MATCH_TABLE_CARDS,
+		h.match.TableCards,
+		nil,
+	)
+
+	h.broadcast(tableCardsMsg.asAny())
+}
+
 func (h *Hub) passTurn() {
 	nextSeatToPlay := h.match.PassTurn()
 	seatTurnMsg := newOutMessage(
@@ -157,19 +176,15 @@ func (h *Hub) revealNextTableCard() {
 		log.Println(err)
 		return
 	}
-	for _, c := range h.match.TableCards {
-		if c == app.BACK {
-			tableCardsMsg := newOutMessage(
-				nil,
-				MATCH_TABLE_CARDS,
-				h.match.TableCards,
-				nil,
-			)
 
-			h.broadcast(tableCardsMsg.asAny())
-			break
-		}
-	}
+	tableCardsMsg := newOutMessage(
+		nil,
+		MATCH_TABLE_CARDS,
+		h.match.TableCards,
+		nil,
+	)
+
+	h.broadcast(tableCardsMsg.asAny())
 }
 
 func (h *Hub) showdown() {
