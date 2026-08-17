@@ -3,23 +3,40 @@ package ws
 import "github.com/google/uuid"
 
 type Message[T any] struct {
-	RequestId *uuid.UUID  `json:"requestId"`
-	Origin    Origin      `json:"origin"`
-	Type      MessageType `json:"type"`
-	Payload   T           `json:"payload"`
-	Error     *Error      `json:"error"`
+	RequestId *uuid.UUID    `json:"requestId"`
+	Origin    Origin        `json:"origin"`
+	Type      MessageType   `json:"type"`
+	Payload   T             `json:"payload"`
+	Error     *MessageError `json:"error"`
 }
 
-func newOutMessage[T any](rId *uuid.UUID, t MessageType, p T, err *Error) *Message[T] {
-	return &Message[T]{
-		RequestId: rId,
-		Origin:    SERVER,
-		Type:      t,
-		Payload:   p,
-		Error:     err,
+type MessageError struct {
+	Message string `json:"message"`
+	Details any    `json:"details"`
+}
+
+type ServerMessageArgs[T any] struct {
+	RequestId  *uuid.UUID
+	Type       MessageType
+	Payload    T
+	ErrMessage string
+	ErrDetails any
+}
+
+func newServerMessage[T any](p ServerMessageArgs[T]) *Message[T] {
+	var msgErr *MessageError
+	if p.ErrMessage != "" {
+		msgErr = &MessageError{
+			Message: p.ErrMessage,
+			Details: p.ErrDetails,
+		}
 	}
-}
 
-func (m *Message[T]) asAny() *Message[any] {
-	return newOutMessage[any](m.RequestId, m.Type, m.Payload, m.Error)
+	return &Message[T]{
+		RequestId: p.RequestId,
+		Origin:    SERVER,
+		Type:      p.Type,
+		Payload:   p.Payload,
+		Error:     msgErr,
+	}
 }

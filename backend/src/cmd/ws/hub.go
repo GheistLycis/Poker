@@ -106,7 +106,11 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 
 func (h *Hub) broadcast(m *Message[any]) {
 	for _, c := range h.clients {
-		c.sendMessage(m.RequestId, m.Type, m.Payload, nil)
+		c.sendMessage(ServerMessageArgs[any]{
+			RequestId: m.RequestId,
+			Type:      m.Type,
+			Payload:   m.Payload,
+		})
 	}
 }
 
@@ -121,7 +125,10 @@ func (h *Hub) sendPlayersInfo() {
 
 	for _, c1 := range loggedInClients {
 		user := newPlayer(c1.player, false)
-		c1.sendMessage(nil, USER_INFO, user, nil)
+		c1.sendMessage(ServerMessageArgs[any]{
+			Type:    USER_INFO,
+			Payload: user,
+		})
 
 		opponents := make([]*Player, len(loggedInClients))
 		for _, c2 := range loggedInClients {
@@ -130,33 +137,33 @@ func (h *Hub) sendPlayersInfo() {
 				opponents = append(opponents, opponent)
 			}
 		}
-		c1.sendMessage(nil, OPPONENTS_INFO, opponents, nil)
+		c1.sendMessage(ServerMessageArgs[any]{
+			Type:    OPPONENTS_INFO,
+			Payload: opponents,
+		})
 	}
 }
 
 func (h *Hub) initRound() {
 	h.match.InitRound()
-	tableCardsMsg := newOutMessage(
-		nil,
-		MATCH_TABLE_CARDS,
-		h.match.TableCards,
-		nil,
-	)
+	tableCardsMsg := newServerMessage(ServerMessageArgs[any]{
+		Type:    MATCH_TABLE_CARDS,
+		Payload: h.match.TableCards,
+	})
 
-	h.broadcast(tableCardsMsg.asAny())
+	h.broadcast(tableCardsMsg)
 }
 
 func (h *Hub) passTurn() {
 	nextSeatToPlay := h.match.PassTurn()
-	seatTurnMsg := newOutMessage(
-		nil,
-		MATCH_SEAT_TURN,
-		map[string]app.SeatIndex{
-			"seatIndex": nextSeatToPlay.Index,
-		},
-		nil,
-	)
-	h.broadcast(seatTurnMsg.asAny())
+	seatTurnMsg := newServerMessage(
+		ServerMessageArgs[any]{
+			Type: MATCH_SEAT_TURN,
+			Payload: map[string]app.SeatIndex{
+				"seatIndex": nextSeatToPlay.Index,
+			},
+		})
+	h.broadcast(seatTurnMsg)
 }
 
 func (h *Hub) revealNextTableCard() {
@@ -165,14 +172,12 @@ func (h *Hub) revealNextTableCard() {
 		return
 	}
 
-	tableCardsMsg := newOutMessage(
-		nil,
-		MATCH_TABLE_CARDS,
-		h.match.TableCards,
-		nil,
-	)
+	tableCardsMsg := newServerMessage(ServerMessageArgs[any]{
+		Type:    MATCH_TABLE_CARDS,
+		Payload: h.match.TableCards,
+	})
 
-	h.broadcast(tableCardsMsg.asAny())
+	h.broadcast(tableCardsMsg)
 }
 
 func (h *Hub) showdown() {

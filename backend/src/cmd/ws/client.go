@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -43,22 +42,20 @@ func (c *Client) handleMessages() {
 		switch msg.Type {
 		case USER_LOGIN:
 			if err := c.handleLogin(msg); err != nil {
-				c.sendMessage(
-					msg.RequestId,
-					msg.Type,
-					nil,
-					newError(fmt.Sprintf("failed to handle login: %v", err), nil),
-				)
+				c.sendMessage(ServerMessageArgs[any]{
+					RequestId:  msg.RequestId,
+					Type:       msg.Type,
+					ErrMessage: fmt.Sprintf("failed to handle login: %v", err),
+				})
 			}
 
 		case USER_ACTION:
 			if err := c.handleAction(msg); err != nil {
-				c.sendMessage(
-					msg.RequestId,
-					msg.Type,
-					nil,
-					newError(fmt.Sprintf("failed to handle action: %v", err), nil),
-				)
+				c.sendMessage(ServerMessageArgs[any]{
+					RequestId:  msg.RequestId,
+					Type:       msg.Type,
+					ErrMessage: fmt.Sprintf("failed to handle action: %v", err),
+				})
 			}
 
 		default:
@@ -67,8 +64,8 @@ func (c *Client) handleMessages() {
 	}
 }
 
-func (c *Client) sendMessage(rId *uuid.UUID, t MessageType, p any, err *Error) error {
-	msg := newOutMessage(rId, t, p, err)
+func (c *Client) sendMessage(m ServerMessageArgs[any]) error {
+	msg := newServerMessage(m)
 
 	if err := c.conn.WriteJSON(msg); err != nil {
 		log.Printf("write error (%T): %v", err, err)
@@ -160,15 +157,13 @@ func (c *Client) handleAction(m *Message[json.RawMessage]) error {
 		match.RoundSeats = newRoundSeats
 	}
 	if payload.Action == app.BET || payload.Action == app.CALL {
-		potAmountMsg := newOutMessage(
-			nil,
-			MATCH_POT_AMOUNT,
-			map[string]int{
+		potAmountMsg := newServerMessage(ServerMessageArgs[any]{
+			Type: MATCH_POT_AMOUNT,
+			Payload: map[string]int{
 				"amount": match.Pot,
 			},
-			nil,
-		)
-		c.hub.broadcast(potAmountMsg.asAny())
+		})
+		c.hub.broadcast(potAmountMsg)
 	}
 	c.hub.endTurn()
 
