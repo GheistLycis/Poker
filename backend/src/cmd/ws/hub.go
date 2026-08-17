@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// TODO: implement actor model pattern to prevent race condition from clients goroutines
 type Hub struct {
 	turnTicker *time.Ticker
 	match      *app.Match
@@ -107,9 +108,11 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 func (h *Hub) broadcast(m *Message[any]) {
 	for _, c := range h.clients {
 		c.sendMessage(ServerMessageArgs[any]{
-			RequestId: m.RequestId,
-			Type:      m.Type,
-			Payload:   m.Payload,
+			RequestId:  m.RequestId,
+			Type:       m.Type,
+			Payload:    m.Payload,
+			ErrMessage: m.Error.Message,
+			ErrDetails: m.Error.Details,
 		})
 	}
 }
