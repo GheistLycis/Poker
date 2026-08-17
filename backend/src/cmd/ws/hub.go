@@ -120,25 +120,13 @@ func (h *Hub) sendPlayersInfo() {
 	}
 
 	for _, c1 := range loggedInClients {
-		user := &Player{
-			Id:        c1.player.Id,
-			Name:      c1.player.Name,
-			Score:     c1.player.Score,
-			Cards:     c1.player.Cards,
-			SeatIndex: c1.player.SeatIndex,
-		}
+		user := newPlayer(c1.player, false)
 		c1.sendMessage(nil, USER_INFO, user, nil)
 
-		var opponents []*Player
+		opponents := make([]*Player, len(loggedInClients))
 		for _, c2 := range loggedInClients {
 			if c1 != c2 {
-				opponent := &Player{
-					Id:        c2.player.Id,
-					Name:      c2.player.Name,
-					Score:     c2.player.Score,
-					Cards:     [2]app.Card{app.BACK, app.BACK},
-					SeatIndex: c2.player.SeatIndex,
-				}
+				opponent := newPlayer(c2.player, true)
 				opponents = append(opponents, opponent)
 			}
 		}
