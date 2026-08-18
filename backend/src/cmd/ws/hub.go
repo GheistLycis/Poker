@@ -120,7 +120,7 @@ func (h *Hub) endTurn() {
 }
 
 func (h *Hub) registerClient(c *websocket.Conn) *Client {
-	client := newClient(c, h)
+	client := newClient(c, h.mailbox)
 
 	h.clients[client.addr] = client
 	log.Printf("client registered: %s (current clients = %d)", client.addr, len(h.clients))

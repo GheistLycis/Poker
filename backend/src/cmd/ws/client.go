@@ -13,19 +13,21 @@ import (
 type Client struct {
 	addr     net.Addr
 	conn     *websocket.Conn
-	player   *app.Player // owned exclusively by Hub.run()'s goroutine
-	hub      *Hub
+	player   *app.Player
+	mailbox  chan any
 	sendChan chan ServerMessageArgs[any]
 }
 
-func newClient(c *websocket.Conn, h *Hub) *Client {
+func newClient(c *websocket.Conn, mailbox chan any) *Client {
 	client := &Client{
 		addr:     c.RemoteAddr(),
 		conn:     c,
-		hub:      h,
+		mailbox:  mailbox,
 		sendChan: make(chan ServerMessageArgs[any], 16),
 	}
+
 	go client.writePump()
+
 	return client
 }
 
@@ -70,7 +72,7 @@ func (c *Client) handleMessages() {
 			}
 
 			reply := make(chan error)
-			c.hub.mailbox <- loginMsg{client: c, userName: payload.UserName, reply: reply}
+			c.mailbox <- loginMsg{client: c, userName: payload.UserName, reply: reply}
 			if err := <-reply; err != nil {
 				c.sendMessage(ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
@@ -96,7 +98,7 @@ func (c *Client) handleMessages() {
 			}
 
 			reply := make(chan error)
-			c.hub.mailbox <- actionMsg{client: c, action: payload.Action, amount: payload.Amount, reply: reply}
+			c.mailbox <- actionMsg{client: c, action: payload.Action, amount: payload.Amount, reply: reply}
 			if err := <-reply; err != nil {
 				c.sendMessage(ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
