@@ -11,19 +11,20 @@ import (
 )
 
 type Client struct {
-	addr     net.Addr
-	conn     *websocket.Conn
+	addr       net.Addr
+	conn       *websocket.Conn
+	hubMailbox chan HubMsg
+	// owned by the Hub goroutine. Readonly within Client via `hubMailbox <- getPlayerMsg{}`
 	player   *app.Player
-	mailbox  chan any
 	sendChan chan ServerMessageArgs[any]
 }
 
-func newClient(c *websocket.Conn, mailbox chan any) *Client {
+func newClient(c *websocket.Conn, mailbox chan HubMsg) *Client {
 	client := &Client{
-		addr:     c.RemoteAddr(),
-		conn:     c,
-		mailbox:  mailbox,
-		sendChan: make(chan ServerMessageArgs[any], 16),
+		addr:       c.RemoteAddr(),
+		conn:       c,
+		hubMailbox: mailbox,
+		sendChan:   make(chan ServerMessageArgs[any]), // ? buffer
 	}
 
 	go client.writePump()
@@ -31,8 +32,6 @@ func newClient(c *websocket.Conn, mailbox chan any) *Client {
 	return client
 }
 
-// writePump is the only goroutine that calls conn.WriteJSON, so broadcasts
-// from Hub and error replies from handleMessages never race on the socket.
 func (c *Client) writePump() {
 	for m := range c.sendChan {
 		msg := newServerMessage(m)
@@ -42,12 +41,8 @@ func (c *Client) writePump() {
 	}
 }
 
-func (c *Client) sendMessage(m ServerMessageArgs[any]) {
-	c.sendChan <- m
-}
-
 func (c *Client) handleMessages() {
-	loggedInAs := c.addr.String() // local to this goroutine only — no shared read of c.player
+	loggedInAs := c.addr.String()
 
 	for {
 		msg := &Message[json.RawMessage]{}
@@ -63,22 +58,26 @@ func (c *Client) handleMessages() {
 				UserName string `json:"userName"`
 			}
 			if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle login: %v", err),
-				})
+				}
 				continue
 			}
 
 			reply := make(chan error)
-			c.mailbox <- loginMsg{client: c, userName: payload.UserName, reply: reply}
+			c.hubMailbox <- loginMsg{
+				client:   c,
+				userName: payload.UserName,
+				reply:    reply,
+			}
 			if err := <-reply; err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle login: %v", err),
-				})
+				}
 			} else {
 				loggedInAs = payload.UserName
 			}
@@ -89,22 +88,27 @@ func (c *Client) handleMessages() {
 				Amount *int             `json:"amount"`
 			}
 			if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle action: %v", err),
-				})
+				}
 				continue
 			}
 
 			reply := make(chan error)
-			c.mailbox <- actionMsg{client: c, action: payload.Action, amount: payload.Amount, reply: reply}
+			c.hubMailbox <- actionMsg{
+				client: c,
+				action: payload.Action,
+				amount: payload.Amount,
+				reply:  reply,
+			}
 			if err := <-reply; err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle action: %v", err),
-				})
+				}
 			}
 
 		default:

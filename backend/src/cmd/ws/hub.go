@@ -12,51 +12,22 @@ import (
 )
 
 type Hub struct {
-	mailbox    chan any
-	turnTicker *time.Ticker
-	match      *app.Match
 	clients    map[net.Addr]*Client
+	mailbox    chan HubMsg
+	match      *app.Match
+	turnTicker *time.Ticker
 }
 
 const TurnDuration = 15 * time.Second
 
-// Messages sent by Client goroutines. Every field either the caller or the
-// Hub needs back travels through a reply/done channel — nothing is ever
-// read back out of Hub state directly.
-type registerMsg struct {
-	conn  *websocket.Conn
-	reply chan *Client
-}
-
-type unregisterMsg struct {
-	addr net.Addr
-	done chan struct{}
-}
-
-type loginMsg struct {
-	client   *Client
-	userName string
-	reply    chan error
-}
-
-type actionMsg struct {
-	client *Client
-	action app.PlayerAction
-	amount *int
-	reply  chan error
-}
-
 func newHub() *Hub {
 	return &Hub{
-		mailbox: make(chan any),
-		match:   app.NewMatch(),
 		clients: map[net.Addr]*Client{},
+		mailbox: make(chan HubMsg), // ? buffer
+		match:   app.NewMatch(),
 	}
 }
 
-// run is the actor loop. h.match, h.clients and h.turnTicker must only ever
-// be touched from inside this goroutine — that's the entire invariant the
-// rest of the package has to respect.
 func (h *Hub) run() {
 	h.turnTicker = time.NewTicker(TurnDuration)
 	defer h.turnTicker.Stop()
@@ -65,25 +36,27 @@ func (h *Hub) run() {
 		select {
 		case <-h.turnTicker.C:
 			h.endTurn()
-		case raw := <-h.mailbox:
-			h.dispatch(raw)
+		case m := <-h.mailbox:
+			h.dispatch(m)
 		}
 	}
 }
 
-func (h *Hub) dispatch(raw any) {
-	switch msg := raw.(type) {
-	case registerMsg:
+func (h *Hub) dispatch(m HubMsg) {
+	switch msg := m.(type) {
+	case registerClientMsg:
 		msg.reply <- h.registerClient(msg.conn)
-	case unregisterMsg:
+	case unregisterClientMsg:
 		h.unregisterClient(msg.addr)
 		close(msg.done)
 	case loginMsg:
 		msg.reply <- h.handleLogin(msg.client, msg.userName)
 	case actionMsg:
 		msg.reply <- h.handleAction(msg.client, msg.action, msg.amount)
+	case getPlayerMsg:
+		msg.reply <- msg.client.player
 	default:
-		log.Printf("hub: unhandled message type %T", raw)
+		log.Printf("hub: unhandled message type %T", m)
 	}
 }
 
@@ -159,13 +132,13 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 
 func (h *Hub) broadcast(m *Message[any]) {
 	for _, c := range h.clients {
-		c.sendMessage(ServerMessageArgs[any]{
+		c.sendChan <- ServerMessageArgs[any]{
 			RequestId:  m.RequestId,
 			Type:       m.Type,
 			Payload:    m.Payload,
 			ErrMessage: m.Error.Message,
 			ErrDetails: m.Error.Details,
-		})
+		}
 	}
 }
 
@@ -180,10 +153,10 @@ func (h *Hub) sendPlayersInfo() {
 
 	for _, c1 := range loggedInClients {
 		user := newPlayer(c1.player, false)
-		c1.sendMessage(ServerMessageArgs[any]{
+		c1.sendChan <- ServerMessageArgs[any]{
 			Type:    USER_INFO,
 			Payload: user,
-		})
+		}
 
 		opponents := make([]*Player, len(loggedInClients))
 		for _, c2 := range loggedInClients {
@@ -192,10 +165,10 @@ func (h *Hub) sendPlayersInfo() {
 				opponents = append(opponents, opponent)
 			}
 		}
-		c1.sendMessage(ServerMessageArgs[any]{
+		c1.sendChan <- ServerMessageArgs[any]{
 			Type:    OPPONENTS_INFO,
 			Payload: opponents,
-		})
+		}
 	}
 }
 
@@ -235,9 +208,6 @@ func (h *Hub) showdown() {
 	h.match.Showdown()
 	// TODO: communicate winners
 }
-
-// --- moved from Client: these mutate match/seat state, so they belong to
-// the Hub actor, not to whichever goroutine happened to read the socket.
 
 func (h *Hub) handleLogin(c *Client, userName string) error {
 	var availableSeat *app.Seat
