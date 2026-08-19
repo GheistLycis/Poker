@@ -16,7 +16,9 @@ func InitServer(r string, p int) {
 	}
 
 	hub := newHub()
-	go hub.handleTicks()
+	go hub.run()
+	defer close(hub.mailbox)
+
 	http.HandleFunc(r, func(w http.ResponseWriter, r *http.Request) {
 		handleNewConn(hub, upgrader, w, r)
 	})
@@ -34,7 +36,15 @@ func handleNewConn(h *Hub, u websocket.Upgrader, w http.ResponseWriter, r *http.
 	}
 	defer conn.Close()
 	log.Println("new conn stablished:", conn.RemoteAddr())
-	client := h.registerClient(conn)
-	defer h.unregisterClient(client.addr)
+
+	reply := make(chan *Client)
+	h.mailbox <- registerClientMsg{conn: conn, reply: reply}
+	client := <-reply
+
 	client.handleMessages()
+
+	done := make(chan struct{})
+	h.mailbox <- unregisterClientMsg{addr: client.addr, done: done}
+	<-done
+	close(client.sendChan)
 }

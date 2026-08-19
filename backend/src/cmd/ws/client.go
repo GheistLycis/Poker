@@ -3,7 +3,6 @@ package ws
 import (
 	"backend/src/app"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -12,160 +11,108 @@ import (
 )
 
 type Client struct {
-	addr   net.Addr
-	conn   *websocket.Conn
-	player *app.Player
-	hub    *Hub
+	addr       net.Addr
+	conn       *websocket.Conn
+	hubMailbox chan HubMsg
+	// owned by the Hub goroutine. Readonly within Client via `hubMailbox <- getPlayerMsg{}`
+	player   *app.Player
+	sendChan chan ServerMessageArgs[any]
 }
 
-func newClient(c *websocket.Conn, h *Hub) *Client {
-	return &Client{
-		addr: c.RemoteAddr(),
-		conn: c,
-		hub:  h,
+func newClient(c *websocket.Conn, mailbox chan HubMsg) *Client {
+	client := &Client{
+		addr:       c.RemoteAddr(),
+		conn:       c,
+		hubMailbox: mailbox,
+		sendChan:   make(chan ServerMessageArgs[any]), // ? buffer
+	}
+
+	go client.writePump()
+
+	return client
+}
+
+func (c *Client) writePump() {
+	for m := range c.sendChan {
+		msg := newServerMessage(m)
+		if err := c.conn.WriteJSON(msg); err != nil {
+			log.Printf("write error (%T): %v", err, err)
+		}
 	}
 }
 
 func (c *Client) handleMessages() {
+	loggedInAs := c.addr.String()
+
 	for {
 		msg := &Message[json.RawMessage]{}
 		if err := c.conn.ReadJSON(msg); err != nil {
 			log.Printf("read error (%T): %v", err, err)
 			break
 		}
-		clientId := c.addr.String()
-		if c.player != nil {
-			clientId = c.player.Name
-		}
-		log.Printf("[CLIENT %s] received msg: type=%s payload=%s", clientId, msg.Type, msg.Payload)
+		log.Printf("[CLIENT %s] received msg: type=%s payload=%s", loggedInAs, msg.Type, msg.Payload)
 
 		switch msg.Type {
 		case USER_LOGIN:
-			if err := c.handleLogin(msg); err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+			var payload struct {
+				UserName string `json:"userName"`
+			}
+			if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle login: %v", err),
-				})
+				}
+				continue
+			}
+
+			reply := make(chan error)
+			c.hubMailbox <- loginMsg{
+				client:   c,
+				userName: payload.UserName,
+				reply:    reply,
+			}
+			if err := <-reply; err != nil {
+				c.sendChan <- ServerMessageArgs[any]{
+					RequestId:  msg.RequestId,
+					Type:       msg.Type,
+					ErrMessage: fmt.Sprintf("failed to handle login: %v", err),
+				}
+			} else {
+				loggedInAs = payload.UserName
 			}
 
 		case USER_ACTION:
-			if err := c.handleAction(msg); err != nil {
-				c.sendMessage(ServerMessageArgs[any]{
+			var payload struct {
+				Action app.PlayerAction `json:"action"`
+				Amount *int             `json:"amount"`
+			}
+			if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+				c.sendChan <- ServerMessageArgs[any]{
 					RequestId:  msg.RequestId,
 					Type:       msg.Type,
 					ErrMessage: fmt.Sprintf("failed to handle action: %v", err),
-				})
+				}
+				continue
+			}
+
+			reply := make(chan error)
+			c.hubMailbox <- actionMsg{
+				client: c,
+				action: payload.Action,
+				amount: payload.Amount,
+				reply:  reply,
+			}
+			if err := <-reply; err != nil {
+				c.sendChan <- ServerMessageArgs[any]{
+					RequestId:  msg.RequestId,
+					Type:       msg.Type,
+					ErrMessage: fmt.Sprintf("failed to handle action: %v", err),
+				}
 			}
 
 		default:
 			log.Printf("TODO: handle message type '%s'", msg.Type)
 		}
 	}
-}
-
-func (c *Client) sendMessage(m ServerMessageArgs[any]) error {
-	msg := newServerMessage(m)
-
-	if err := c.conn.WriteJSON(msg); err != nil {
-		log.Printf("write error (%T): %v", err, err)
-		return err
-	}
-
-	return nil
-}
-
-func (c *Client) handleLogin(m *Message[json.RawMessage]) error {
-	var payload struct {
-		UserName string `json:"userName"`
-	}
-	if err := json.Unmarshal(m.Payload, &payload); err != nil {
-		return err
-	}
-
-	var availableSeat *app.Seat
-	for _, s := range c.hub.match.Seats {
-		if s.Player == nil {
-			availableSeat = s
-			break
-		}
-	}
-	if availableSeat == nil {
-		return errors.New("no available seats for user in this match")
-	}
-
-	match := c.hub.match
-	player := app.NewPlayer(payload.UserName, availableSeat.Index)
-
-	availableSeat.Player = player
-	c.player = player
-	c.hub.sendPlayersInfo()
-	if match.RoundSeats == [8]*app.Seat{} {
-		playersCount := 0
-
-		for _, s := range match.Seats {
-			if s.Player != nil {
-				playersCount++
-			}
-			if playersCount == 2 {
-				match.InitRound()
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-func (c *Client) handleAction(m *Message[json.RawMessage]) error {
-	var payload struct {
-		Action app.PlayerAction `json:"action"`
-		Amount *int             `json:"amount"`
-	}
-	if err := json.Unmarshal(m.Payload, &payload); err != nil {
-		return err
-	}
-
-	match := c.hub.match
-
-	switch payload.Action {
-	case app.BET:
-		if payload.Amount == nil {
-			return fmt.Errorf("no amount provided for bet")
-		}
-
-		value := *payload.Amount
-
-		if value <= match.LastBet {
-			return errors.New("bets/raises are only allowed if greater than the last bet")
-		}
-		match.DoPotTransaction(value, c.player)
-		match.LastBet = value
-
-	case app.CALL:
-		match.DoPotTransaction(match.LastBet, c.player)
-
-	case app.FOLD:
-		playerSeatIdx := c.player.SeatIndex
-		var newRoundSeats [8]*app.Seat
-
-		for i, s := range match.RoundSeats {
-			if s != nil && s.Index != playerSeatIdx {
-				newRoundSeats[i] = s
-			}
-		}
-		match.RoundSeats = newRoundSeats
-	}
-	if payload.Action == app.BET || payload.Action == app.CALL {
-		potAmountMsg := newServerMessage(ServerMessageArgs[any]{
-			Type: MATCH_POT_AMOUNT,
-			Payload: map[string]int{
-				"amount": match.Pot,
-			},
-		})
-		c.hub.broadcast(potAmountMsg)
-	}
-	c.hub.endTurn()
-
-	return nil
 }

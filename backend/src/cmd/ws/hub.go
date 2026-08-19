@@ -2,6 +2,8 @@ package ws
 
 import (
 	"backend/src/app"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -9,29 +11,52 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// TODO: implement actor model pattern to prevent race condition from clients goroutines
 type Hub struct {
-	turnTicker *time.Ticker
-	match      *app.Match
 	clients    map[net.Addr]*Client
+	mailbox    chan HubMsg
+	match      *app.Match
+	turnTicker *time.Ticker
 }
 
 const TurnDuration = 15 * time.Second
 
 func newHub() *Hub {
 	return &Hub{
-		match:   app.NewMatch(),
 		clients: map[net.Addr]*Client{},
+		mailbox: make(chan HubMsg), // ? buffer
+		match:   app.NewMatch(),
 	}
 }
 
-func (h *Hub) handleTicks() {
-	turnTicker := time.NewTicker(TurnDuration)
-	defer turnTicker.Stop()
+func (h *Hub) run() {
+	h.turnTicker = time.NewTicker(TurnDuration)
+	defer h.turnTicker.Stop()
 
-	h.turnTicker = turnTicker
-	for range h.turnTicker.C {
-		h.endTurn()
+	for {
+		select {
+		case <-h.turnTicker.C:
+			h.endTurn()
+		case m := <-h.mailbox:
+			h.dispatch(m)
+		}
+	}
+}
+
+func (h *Hub) dispatch(m HubMsg) {
+	switch msg := m.(type) {
+	case registerClientMsg:
+		msg.reply <- h.registerClient(msg.conn)
+	case unregisterClientMsg:
+		h.unregisterClient(msg.addr)
+		close(msg.done)
+	case loginMsg:
+		msg.reply <- h.handleLogin(msg.client, msg.userName)
+	case actionMsg:
+		msg.reply <- h.handleAction(msg.client, msg.action, msg.amount)
+	case getPlayerMsg:
+		msg.reply <- msg.client.player
+	default:
+		log.Printf("hub: unhandled message type %T", m)
 	}
 }
 
@@ -68,7 +93,7 @@ func (h *Hub) endTurn() {
 }
 
 func (h *Hub) registerClient(c *websocket.Conn) *Client {
-	client := newClient(c, h)
+	client := newClient(c, h.mailbox)
 
 	h.clients[client.addr] = client
 	log.Printf("client registered: %s (current clients = %d)", client.addr, len(h.clients))
@@ -107,13 +132,13 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 
 func (h *Hub) broadcast(m *Message[any]) {
 	for _, c := range h.clients {
-		c.sendMessage(ServerMessageArgs[any]{
+		c.sendChan <- ServerMessageArgs[any]{
 			RequestId:  m.RequestId,
 			Type:       m.Type,
 			Payload:    m.Payload,
 			ErrMessage: m.Error.Message,
 			ErrDetails: m.Error.Details,
-		})
+		}
 	}
 }
 
@@ -128,10 +153,10 @@ func (h *Hub) sendPlayersInfo() {
 
 	for _, c1 := range loggedInClients {
 		user := newPlayer(c1.player, false)
-		c1.sendMessage(ServerMessageArgs[any]{
+		c1.sendChan <- ServerMessageArgs[any]{
 			Type:    USER_INFO,
 			Payload: user,
-		})
+		}
 
 		opponents := make([]*Player, len(loggedInClients))
 		for _, c2 := range loggedInClients {
@@ -140,10 +165,10 @@ func (h *Hub) sendPlayersInfo() {
 				opponents = append(opponents, opponent)
 			}
 		}
-		c1.sendMessage(ServerMessageArgs[any]{
+		c1.sendChan <- ServerMessageArgs[any]{
 			Type:    OPPONENTS_INFO,
 			Payload: opponents,
-		})
+		}
 	}
 }
 
@@ -153,19 +178,17 @@ func (h *Hub) initRound() {
 		Type:    MATCH_TABLE_CARDS,
 		Payload: h.match.TableCards,
 	})
-
 	h.broadcast(tableCardsMsg)
 }
 
 func (h *Hub) passTurn() {
 	nextSeatToPlay := h.match.PassTurn()
-	seatTurnMsg := newServerMessage(
-		ServerMessageArgs[any]{
-			Type: MATCH_SEAT_TURN,
-			Payload: map[string]app.SeatIndex{
-				"seatIndex": nextSeatToPlay.Index,
-			},
-		})
+	seatTurnMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: MATCH_SEAT_TURN,
+		Payload: map[string]app.SeatIndex{
+			"seatIndex": nextSeatToPlay.Index,
+		},
+	})
 	h.broadcast(seatTurnMsg)
 }
 
@@ -174,16 +197,89 @@ func (h *Hub) revealNextTableCard() {
 		log.Println(err)
 		return
 	}
-
 	tableCardsMsg := newServerMessage(ServerMessageArgs[any]{
 		Type:    MATCH_TABLE_CARDS,
 		Payload: h.match.TableCards,
 	})
-
 	h.broadcast(tableCardsMsg)
 }
 
 func (h *Hub) showdown() {
 	h.match.Showdown()
 	// TODO: communicate winners
+}
+
+func (h *Hub) handleLogin(c *Client, userName string) error {
+	var availableSeat *app.Seat
+	for _, s := range h.match.Seats {
+		if s.Player == nil {
+			availableSeat = s
+			break
+		}
+	}
+	if availableSeat == nil {
+		return errors.New("no available seats for user in this match")
+	}
+
+	player := app.NewPlayer(userName, availableSeat.Index)
+	availableSeat.Player = player
+	c.player = player
+
+	h.sendPlayersInfo()
+
+	if h.match.RoundSeats == [8]*app.Seat{} {
+		playersCount := 0
+		for _, s := range h.match.Seats {
+			if s.Player != nil {
+				playersCount++
+			}
+			if playersCount == 2 {
+				h.match.InitRound()
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) error {
+	switch action {
+	case app.BET:
+		if amount == nil {
+			return fmt.Errorf("no amount provided for bet")
+		}
+		value := *amount
+		if value <= h.match.LastBet {
+			return errors.New("bets/raises are only allowed if greater than the last bet")
+		}
+		h.match.DoPotTransaction(value, c.player)
+		h.match.LastBet = value
+
+	case app.CALL:
+		h.match.DoPotTransaction(h.match.LastBet, c.player)
+
+	case app.FOLD:
+		playerSeatIdx := c.player.SeatIndex
+		var newRoundSeats [8]*app.Seat
+		for i, s := range h.match.RoundSeats {
+			if s != nil && s.Index != playerSeatIdx {
+				newRoundSeats[i] = s
+			}
+		}
+		h.match.RoundSeats = newRoundSeats
+	}
+
+	if action == app.BET || action == app.CALL {
+		potAmountMsg := newServerMessage(ServerMessageArgs[any]{
+			Type: MATCH_POT_AMOUNT,
+			Payload: map[string]int{
+				"amount": h.match.Pot,
+			},
+		})
+		h.broadcast(potAmountMsg)
+	}
+	h.endTurn()
+
+	return nil
 }
