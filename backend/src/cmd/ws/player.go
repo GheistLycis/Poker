@@ -10,15 +10,17 @@ type Player struct {
 	Id        uuid.UUID     `json:"id"`
 	Name      string        `json:"name"`
 	Score     int           `json:"score"`
-	Cards     [2]app.Card   `json:"cards"`
+	Cards     []app.Card    `json:"cards"`
 	SeatIndex app.SeatIndex `json:"seatIndex"`
 }
 
 func newPlayer(p *app.Player, hideCards bool) *Player {
-	cards := p.Cards
+	cards := []app.Card{}
 
 	if hideCards {
-		cards = [2]app.Card{app.BACK, app.BACK}
+		cards = []app.Card{app.BACK, app.BACK}
+	} else if p.Cards != [2]app.Card{} {
+		cards = p.Cards[:]
 	}
 
 	return &Player{

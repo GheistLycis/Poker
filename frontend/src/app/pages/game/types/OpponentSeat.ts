@@ -1,5 +1,7 @@
+import type { SeatIndex } from '@app-types/SeatIndex';
+
 export interface OpponentSeat {
-  seat: number;
+  seat: SeatIndex;
   left: string;
   top: string;
 }

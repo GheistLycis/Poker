@@ -60,8 +60,10 @@ func (h *Hub) dispatch(m HubMsg) {
 	}
 }
 
+// TODO: a new round needs to init whenever someone raises
 func (h *Hub) endTurn() {
-	h.turnTicker.Reset(TurnDuration)
+	h.turnTicker.Reset(1 * time.Hour)
+	defer h.turnTicker.Reset(TurnDuration)
 
 	if h.match.RoundSeats == [8]*app.Seat{} {
 		return
@@ -89,7 +91,6 @@ func (h *Hub) endTurn() {
 		h.passTurn()
 	}
 	h.sendPlayersInfo()
-	h.turnTicker.Reset(TurnDuration)
 }
 
 func (h *Hub) registerClient(c *websocket.Conn) *Client {
@@ -131,13 +132,20 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 }
 
 func (h *Hub) broadcast(m *Message[any]) {
+	var errMsg string
+	var errDetails any
+	if m.Error != nil {
+		errMsg = m.Error.Message
+		errDetails = m.Error.Details
+	}
+
 	for _, c := range h.clients {
 		c.sendChan <- ServerMessageArgs[any]{
 			RequestId:  m.RequestId,
 			Type:       m.Type,
 			Payload:    m.Payload,
-			ErrMessage: m.Error.Message,
-			ErrDetails: m.Error.Details,
+			ErrMessage: errMsg,
+			ErrDetails: errDetails,
 		}
 	}
 }
@@ -158,7 +166,7 @@ func (h *Hub) sendPlayersInfo() {
 			Payload: user,
 		}
 
-		opponents := make([]*Player, len(loggedInClients))
+		opponents := []*Player{}
 		for _, c2 := range loggedInClients {
 			if c1 != c2 {
 				opponent := newPlayer(c2.player, true)
@@ -234,7 +242,7 @@ func (h *Hub) handleLogin(c *Client, userName string) error {
 				playersCount++
 			}
 			if playersCount == 2 {
-				h.match.InitRound()
+				h.initRound()
 				break
 			}
 		}

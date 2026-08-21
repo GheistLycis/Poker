@@ -1,39 +1,53 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import type { SeatIndex } from '@app-types/SeatIndex';
 import { Opponent } from '@components/opponent/opponent';
 import { Table } from '@components/table/table';
 import { User } from '@components/user/user';
 import { MatchService } from '@services/match/match';
-import { map } from 'rxjs';
-import type { OpponentSeat } from './types/OpponentSeat';
+import { UserService } from '@services/user/user';
+import { TOTAL_SEATS } from './consts';
 
 @Component({
   selector: 'app-game',
-  imports: [Opponent, AsyncPipe, MatProgressSpinnerModule, User, Table],
+  imports: [Opponent, MatProgressSpinnerModule, User, Table],
   templateUrl: './game.html',
 })
 export class Game {
   matchService = inject(MatchService);
+  userService = inject(UserService);
 
-  opponentsSeats$ = this.matchService.seats$.pipe(
-    map((seatsMap) => {
-      const opponentsCount = Object.keys(seatsMap).length - 1;
-      const hasOnlyOneOpponent = opponentsCount === 1;
-      const result: OpponentSeat[] = [];
+  private seats = toSignal(this.matchService.seats$);
+  opponentsSeats = computed(() => {
+    const user = this.userService.user();
 
-      for (let i = 0; i++; i < opponentsCount) {
-        const angleDeg = hasOnlyOneOpponent ? 90 : 180 - i * (180 / (opponentsCount - 1));
-        const rad = (angleDeg * Math.PI) / 180;
+    if (!user) return [];
 
-        result.push({
-          seat: i + 1,
-          left: `${50 + 44 * Math.cos(rad)}%`,
-          top: `${50 - 40 * Math.sin(rad)}%`,
-        });
-      }
+    const seats = Object.entries(this.seats() ?? {}).map<[SeatIndex, string | null]>(
+      ([seatIndex, playerId]) => [+seatIndex as SeatIndex, playerId],
+    );
 
-      return result;
-    }),
-  );
+    if (!seats.length) return [];
+
+    const [userSeat] = seats.find(([_, userId]) => userId === user.id)!;
+    const opponentsSeats = seats
+      .filter(([seatIndex]) => seatIndex !== userSeat)
+      .sort(
+        ([seatA], [seatB]) =>
+          ((seatA - userSeat + TOTAL_SEATS) % TOTAL_SEATS) -
+          ((seatB - userSeat + TOTAL_SEATS) % TOTAL_SEATS),
+      );
+
+    return opponentsSeats.map(([seat], i) => {
+      const angleDeg = 180 - i * (180 / (TOTAL_SEATS - 1));
+      const rad = (angleDeg * Math.PI) / 180;
+
+      return {
+        seat,
+        left: `${50 + 44 * Math.cos(rad)}%`,
+        top: `${50 - 40 * Math.sin(rad)}%`,
+      };
+    });
+  });
 }

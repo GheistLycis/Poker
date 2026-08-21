@@ -1,5 +1,7 @@
+@let opponentsSeats = this.opponentsSeats();
+
 <div class="relative h-[98svh] overflow-hidden">
-  @if (opponentsSeats$ | async; as opponentsSeats) {
+  @if (opponentsSeats.length) {
     @for (opponentSeat of opponentsSeats; track opponentSeat.seat) {
       <div
         [style.left]="opponentSeat.left"
