@@ -180,6 +180,16 @@ func (h *Hub) sendPlayersInfo() {
 	}
 }
 
+func (h *Hub) sendSeatsInfo() {
+	seatsMap := [8]*string{}
+
+	seatsMsg := newServerMessage(ServerMessageArgs[any]{
+		Type:    MATCH_SEATS,
+		Payload: seatsMap,
+	})
+	h.broadcast(seatsMsg)
+}
+
 func (h *Hub) initRound() {
 	h.match.InitRound()
 	tableCardsMsg := newServerMessage(ServerMessageArgs[any]{
