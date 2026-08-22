@@ -1,11 +1,21 @@
-<img
-  [alt]="variant()"
-  [ngSrc]="'cards/' + variant() + imgFileType()"
-  [width]="size().width"
-  [height]="size().height"
-  [ngClass]="{
-    'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': !isCardBack(),
-  }"
-  [class]="class()"
-  priority
-/>
+@if (this.variant() !== null) {
+  <img
+    [alt]="variant()"
+    [ngSrc]="'cards/' + variant() + imgFileType()"
+    [width]="size().width"
+    [height]="size().height"
+    [ngClass]="{
+      'duration-300 ease-out hover:-translate-y-2 hover:opacity-80': !isCardBack(),
+    }"
+    [class]="class()"
+    priority
+  />
+} @else {
+  <div
+    [ngStyle]="{
+      'height.px': size().height,
+      'width.px': size().width,
+    }"
+    class="box-border rounded-lg border-2 border-white/50 bg-white/5"
+  ></div>
+}
