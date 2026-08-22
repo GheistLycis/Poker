@@ -14,7 +14,7 @@ const (
 	SIX
 	SEVEN
 
-	)
+)
 */
 type SeatIndex int
 
