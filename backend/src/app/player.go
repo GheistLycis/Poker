@@ -17,5 +17,6 @@ func NewPlayer(n string, s SeatIndex) *Player {
 		Id:        uuid.New(),
 		Name:      n,
 		SeatIndex: s,
+		Score:     10_000,
 	}
 }

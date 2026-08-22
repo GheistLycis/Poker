@@ -36,7 +36,7 @@ export class MatchService {
     map((msg) => msg.seatIndex),
     shareReplay({ bufferSize: 1, refCount: false }),
   );
-  revealedCards$ = this.apiService
+  tableCards$ = this.apiService
     .getMessages('match.table-cards')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
 
