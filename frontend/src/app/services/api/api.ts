@@ -22,7 +22,7 @@ export class ApiService {
   readonly receivedMessages$ = this.connection$.pipe(
     retry({ delay: (_, count) => timer(Math.min(1000 * 2 ** count, 30_000)) }),
     filter((msg) => msg.origin === 'SERVER'),
-    shareReplay({ bufferSize: 1, refCount: false }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   constructor() {
