@@ -118,12 +118,14 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 				break
 			}
 		}
+		h.sendSeatsInfo()
 		if h.match.SeatTurn != nil && playerSeatIdx == h.match.SeatTurn.Index {
 			h.endTurn()
+		} else {
+			h.sendPlayersInfo()
 		}
 	}
 	delete(h.clients, addr)
-	h.sendPlayersInfo()
 	playerName := "N/A"
 	if player != nil {
 		playerName = player.Name
@@ -181,11 +183,19 @@ func (h *Hub) sendPlayersInfo() {
 }
 
 func (h *Hub) sendSeatsInfo() {
-	seatsMap := [8]*string{}
+	seatPlayerMap := map[app.SeatIndex]*string{}
+	for _, s := range h.match.Seats {
+		if s.Player != nil {
+			id := s.Player.Id.String()
+			seatPlayerMap[s.Index] = &id
+		} else {
+			seatPlayerMap[s.Index] = nil
+		}
+	}
 
 	seatsMsg := newServerMessage(ServerMessageArgs[any]{
 		Type:    MATCH_SEATS,
-		Payload: seatsMap,
+		Payload: seatPlayerMap,
 	})
 	h.broadcast(seatsMsg)
 }
@@ -244,6 +254,7 @@ func (h *Hub) handleLogin(c *Client, userName string) error {
 	c.player = player
 
 	h.sendPlayersInfo()
+	h.sendSeatsInfo()
 
 	if h.match.RoundSeats == [8]*app.Seat{} {
 		playersCount := 0

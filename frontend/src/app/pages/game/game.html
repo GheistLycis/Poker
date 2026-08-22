@@ -1,19 +1,13 @@
-@let opponentsSeats = this.opponentsSeats();
-
 <div class="relative h-[98svh] overflow-hidden">
-  @if (opponentsSeats.length) {
-    @for (opponentSeat of opponentsSeats; track opponentSeat.seat) {
-      <div
-        [style.left]="opponentSeat.left"
-        [style.top]="opponentSeat.top"
-        class="absolute w-max -translate-1/2"
-      >
-        <app-opponent [seat]="opponentSeat.seat" />
-      </div>
-    }
-  } @else {
-    <div class="absolute top-0 h-40 w-full">
-      <mat-progress-spinner />
+  <img ngSrc="background.jpg" alt="background" fill priority />
+
+  @for (opponentSeat of this.opponentsSeats(); track opponentSeat.seat) {
+    <div
+      [style.left]="opponentSeat.left"
+      [style.top]="opponentSeat.top"
+      class="absolute w-max -translate-1/2"
+    >
+      <app-opponent [seat]="opponentSeat.seat" />
     </div>
   }
 

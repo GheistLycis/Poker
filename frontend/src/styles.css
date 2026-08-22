@@ -1,6 +1,6 @@
+@import './styles/fonts.css';
 @import '@angular/material/prebuilt-themes/magenta-violet.css';
 @import 'tailwindcss';
-@import './styles/fonts.css';
 @import './styles/animations.css';
 @import './styles/palette.css';
 
