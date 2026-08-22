@@ -1,0 +1,45 @@
+package app
+
+/*
+const (
+
+	ROYAL_FLUSH Hand = "ROYAL_FLUSH"
+	STRAIGHT_FLUSH Hand = "STRAIGHT_FLUSH"
+	FOUR_OF_A_KIND Hand = "FOUR_OF_A_KIND"
+	FULL_HOUSE Hand = "FULL_HOUSE"
+	FLUSH Hand = "FLUSH"
+	STRAIGHT Hand = "STRAIGHT"
+	THREE_OF_A_KIND Hand = "THREE_OF_A_KIND"
+	TWO_PAIRS Hand = "TWO_PAIRS"
+	ONE_PAIR Hand = "ONE_PAIR"
+	HIGH_CARD Hand = "HIGH_CARD"
+
+)
+*/
+type Hand string
+
+const (
+	ROYAL_FLUSH     Hand = "ROYAL_FLUSH"
+	STRAIGHT_FLUSH  Hand = "STRAIGHT_FLUSH"
+	FOUR_OF_A_KIND  Hand = "FOUR_OF_A_KIND"
+	FULL_HOUSE      Hand = "FULL_HOUSE"
+	FLUSH           Hand = "FLUSH"
+	STRAIGHT        Hand = "STRAIGHT"
+	THREE_OF_A_KIND Hand = "THREE_OF_A_KIND"
+	TWO_PAIRS       Hand = "TWO_PAIRS"
+	ONE_PAIR        Hand = "ONE_PAIR"
+	HIGH_CARD       Hand = "HIGH_CARD"
+)
+
+var HandRank = [...]Hand{
+	HIGH_CARD,
+	ONE_PAIR,
+	TWO_PAIRS,
+	THREE_OF_A_KIND,
+	STRAIGHT,
+	FLUSH,
+	FULL_HOUSE,
+	FOUR_OF_A_KIND,
+	STRAIGHT_FLUSH,
+	ROYAL_FLUSH,
+}
