@@ -2,7 +2,7 @@ import { NgClass, NgOptimizedImage } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import type { Card as CardType } from '@app-types/Card';
 import { CardEnum } from '@app-types/Card';
-import type { CardOwner} from '@app-types/CardOwner';
+import type { CardOwner } from '@app-types/CardOwner';
 import { CardOwnerEnum } from '@app-types/CardOwner';
 
 @Component({
@@ -17,7 +17,7 @@ export class Card {
 
   imgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
   size = computed(() => {
-    let height = 140;
+    let height = 100;
     let width = height * 0.71;
 
     if (this.owner() !== CardOwnerEnum.OPPONENT) {

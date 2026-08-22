@@ -1,13 +1,11 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import type { Card as CardType } from '@app-types/Card';
 import { CardEnum } from '@app-types/Card';
 import { CardOwnerEnum } from '@app-types/CardOwner';
 import type { Player } from '@app-types/Player';
-import { MatchService } from '@services/match/match';
-import { UserService } from '@services/user/user';
-import { filter, interval, map, switchMap, takeWhile } from 'rxjs';
+import { distinctUntilChanged, filter, interval, map, switchMap, takeWhile } from 'rxjs';
 import { Card } from '../card/card';
 
 @Component({
@@ -19,16 +17,15 @@ export class CardsHand {
   CARD_ENUM = CardEnum;
   CARD_OWNER_ENUM = CardOwnerEnum;
 
-  userService = inject(UserService);
-  matchService = inject(MatchService);
-
   player = input.required<Player>();
   isUser = input.required<boolean>();
 
-  // APPLYING "PUSH EACH CARD TO HAND" EFFECT
   cards$ = toObservable(this.player).pipe(
-    filter(({ cards }) => !!cards.length),
-    switchMap(({ cards }) =>
+    map(({ cards }) => cards),
+    filter((cards) => !!cards.length),
+    distinctUntilChanged((prev, curr) => prev.toString() === curr.toString()),
+    switchMap((cards) =>
+      // * "push each card to hand" effect
       interval(200).pipe(
         takeWhile((cardCount) => cardCount < 2, true),
         map((cardCount) => cards.slice(0, cardCount) as (CardType | null)[]),

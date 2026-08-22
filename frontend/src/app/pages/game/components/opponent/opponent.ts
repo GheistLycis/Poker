@@ -12,11 +12,11 @@ import { CardsHand } from '../cards-hand/cards-hand';
   templateUrl: './opponent.html',
 })
 export class Opponent {
-  matchService = inject(MatchService);
+  private matchService = inject(MatchService);
 
   seat = input.required<SeatIndex>();
 
-  seat$ = toObservable(this.seat);
+  private seat$ = toObservable(this.seat);
   opponent$ = combineLatest([
     this.matchService.opponents$,
     this.matchService.seats$,

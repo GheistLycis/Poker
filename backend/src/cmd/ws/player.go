@@ -17,10 +17,12 @@ type Player struct {
 func newPlayer(p *app.Player, hideCards bool) *Player {
 	cards := []app.Card{}
 
-	if hideCards {
-		cards = []app.Card{app.BACK, app.BACK}
-	} else if p.Cards != [2]app.Card{} {
-		cards = p.Cards[:]
+	if p.Cards != [2]app.Card{} {
+		if hideCards {
+			cards = []app.Card{app.BACK, app.BACK}
+		} else {
+			cards = p.Cards[:]
+		}
 	}
 
 	return &Player{

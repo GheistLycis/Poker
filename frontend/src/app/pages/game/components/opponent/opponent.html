@@ -8,5 +8,7 @@
     </p>
     <app-cards-hand [player]="opponent" [isUser]="false" />
     <p>{{ opponent.score | currency }}</p>
+  } @else {
+    <div class="h-12 w-18 rounded-full bg-black/25"></div>
   }
 </div>
