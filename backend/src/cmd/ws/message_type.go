@@ -11,7 +11,6 @@ const (
 
 	OPPONENTS_ACTION MessageType = "opponents.action"
 	OPPONENTS_INFO MessageType = "opponents.info"
-	OPPONENTS_REVEL_HANDS MessageType = "opponents.reveal-hands"
 
 	USER_ACTION MessageType = "user.action"
 	USER_EMOTE MessageType = "user.emote"
@@ -29,9 +28,8 @@ const (
 	MATCH_TABLE_CARDS MessageType = "match.table-cards"
 	MATCH_WINNER      MessageType = "match.winner"
 
-	OPPONENTS_ACTION      MessageType = "opponents.action"
-	OPPONENTS_INFO        MessageType = "opponents.info"
-	OPPONENTS_REVEL_HANDS MessageType = "opponents.reveal-hands"
+	OPPONENTS_ACTION MessageType = "opponents.action"
+	OPPONENTS_INFO   MessageType = "opponents.info"
 
 	USER_ACTION MessageType = "user.action"
 	USER_EMOTE  MessageType = "user.emote"

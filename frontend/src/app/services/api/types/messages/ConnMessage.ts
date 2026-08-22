@@ -1,5 +1,4 @@
 import type { ReceiveOpponentAction } from './in/ReceiveOpponentAction';
-import type { ReceiveOpponentsHands } from './in/ReceiveOpponentsHands';
 import type { ReceiveOpponentsInfo } from './in/ReceiveOpponentsInfo';
 import type { ReceivePotAmount } from './in/ReceivePotAmount';
 import type { ReceiveSeats } from './in/ReceiveSeats';
@@ -13,7 +12,6 @@ import type { SendUserLogin } from './out/SendUserLogin';
 
 export type InConnMessage =
   | ReceiveOpponentAction
-  | ReceiveOpponentsHands
   | ReceiveOpponentsInfo
   | ReceivePotAmount
   | ReceiveTableCards

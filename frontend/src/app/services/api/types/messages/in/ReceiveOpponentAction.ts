@@ -1,3 +1,4 @@
+import type { Player } from '@app-types/Player';
 import type { PlayerAction } from '@app-types/PlayerAction';
 import type { WebSocketIncomingMessage } from './WebSocketIncomingMessage';
 
@@ -7,7 +8,7 @@ export interface ReceiveOpponentAction extends WebSocketIncomingMessage {
 }
 
 interface Payload {
-  player: string;
+  player: Player['id'];
   action: PlayerAction;
 }
 

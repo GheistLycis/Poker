@@ -3,9 +3,7 @@ import type { PlayerAction } from '@app-types/PlayerAction';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
 import { ApiService } from '@services/api/api';
 import { WebSocketConnStateEnum } from '@services/api/types/ConnState';
-import type { ReceiveOpponentsHands } from '@services/api/types/messages/in/ReceiveOpponentsHands';
-import { map, shareReplay, startWith } from 'rxjs';
-import { combineLatest } from 'rxjs/internal/observable/combineLatest';
+import { map, shareReplay } from 'rxjs';
 
 @Service()
 export class MatchService {
@@ -15,23 +13,9 @@ export class MatchService {
   seats$ = this.apiService
     .getMessages('match.seats')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
-  opponents$ = combineLatest([
-    this.apiService.getMessages('opponents.info'),
-    this.apiService
-      .getMessages('opponents.reveal-hands')
-      .pipe(startWith<ReceiveOpponentsHands['payload']>({})),
-  ]).pipe(
-    map(([opponents, hands]) => {
-      Object.entries(hands).forEach(([id, hand]) => {
-        const opponent = opponents.find((opponent) => opponent.id === id);
-
-        if (opponent) opponent.cards = hand;
-      });
-
-      return opponents;
-    }),
-    shareReplay({ bufferSize: 1, refCount: false }),
-  );
+  opponents$ = this.apiService
+    .getMessages('opponents.info')
+    .pipe(shareReplay({ bufferSize: 1, refCount: false }));
   seatTurn$ = this.apiService.getMessages('match.seat-turn').pipe(
     map((msg) => msg.seatIndex),
     shareReplay({ bufferSize: 1, refCount: false }),
