@@ -215,20 +215,25 @@ func getPower(c Card) int {
 	return slices.Index(suitRank[:], c) + 2
 }
 
-func isAllTheSameSuit(suits []Suit) bool {
-	return !slices.ContainsFunc(suits, func(s Suit) bool {
-		return s != suits[0]
+func isAllTheSameSuit(cards []Card) bool {
+	return !slices.ContainsFunc(cards, func(c Card) bool {
+		return getSuit(c) != getSuit(cards[0])
 	})
 }
 
-func isAllTheSamePower(powers []int) bool {
-	return !slices.ContainsFunc(powers, func(p int) bool {
-		return p != powers[0]
+func isAllTheSamePower(cards []Card) bool {
+	return !slices.ContainsFunc(cards, func(c Card) bool {
+		return getPower(c) != getPower(cards[0])
 	})
 }
 
-func isSequence(powers []int) bool {
+func isSequence(cards []Card) bool {
+	powers := make([]int, len(cards))
+	for i, c := range cards {
+		powers[i] = getPower(c)
+	}
 	slices.Sort(powers)
+
 	for i := range len(powers) - 1 {
 		if powers[i+1] != powers[i]+1 {
 			return false
@@ -236,4 +241,21 @@ func isSequence(powers []int) bool {
 	}
 
 	return true
+}
+
+func getHighest(cards []Card) Card {
+	highest := cards[0]
+	for _, c := range cards {
+		if getPower(c) > getPower(highest) {
+			highest = c
+		}
+	}
+
+	return highest
+}
+
+func sortByPower(cards []Card) {
+	slices.SortFunc(cards, func(a, b Card) int {
+		return getPower(a) - getPower(b)
+	})
 }

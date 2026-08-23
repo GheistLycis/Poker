@@ -201,12 +201,8 @@ func (m *Match) Showdown() []*Player {
 }
 
 func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
-	cards := slices.Concat(m.TableCards[:], h[:])
-	slices.SortFunc(cards, func(a, b Card) int {
-		return getPower(a) - getPower(b)
-	})
-	hand := [5]Card(cards)
-	highestCard := hand[4]
+	hand := [5]Card(slices.Concat(h[:], m.TableCards[:]))
+	highestCard := getHighest(hand[:])
 
 	if hasRoyalFlush(hand) {
 		return ROYAL_FLUSH, highestCard

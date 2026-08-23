@@ -1,7 +1,5 @@
 package app
 
-import "slices"
-
 /*
 const (
 
@@ -46,22 +44,11 @@ var HandRank = [...]Hand{
 	ROYAL_FLUSH,
 }
 
-func getHandStats(h [5]Card) ([5]int, [5]Suit) {
-	powers := [5]int{}
-	suits := [5]Suit{}
-	for i, c := range h {
-		powers[i] = getPower(c)
-		suits[i] = getSuit(c)
-	}
-
-	return powers, suits
-}
-
 func hasRoyalFlush(h [5]Card) bool {
-	powers, suits := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	highest := getHighest(hand)
 
-	if isSequence(powers[:]) && powers[4] == 14 && isAllTheSameSuit(suits[:]) {
+	if isSequence(hand) && getPower(highest) == 14 && isAllTheSameSuit(hand) {
 		return true
 	}
 
@@ -69,9 +56,9 @@ func hasRoyalFlush(h [5]Card) bool {
 }
 
 func hasStraightFlush(h [5]Card) bool {
-	powers, suits := getHandStats(h)
+	hand := h[:]
 
-	if isSequence(powers[:]) && isAllTheSameSuit(suits[:]) {
+	if isSequence(hand) && isAllTheSameSuit(hand) {
 		return true
 	}
 
@@ -79,10 +66,10 @@ func hasStraightFlush(h [5]Card) bool {
 }
 
 func hasFourOfAKind(h [5]Card) bool {
-	powers, _ := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	sortByPower(hand)
 
-	if isAllTheSamePower(powers[:4]) || isAllTheSamePower(powers[1:]) {
+	if isAllTheSamePower(hand[:4]) || isAllTheSamePower(hand[1:]) {
 		return true
 	}
 
@@ -90,11 +77,11 @@ func hasFourOfAKind(h [5]Card) bool {
 }
 
 func hasFullHouse(h [5]Card) bool {
-	powers, _ := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	sortByPower(hand)
 
-	if (isAllTheSamePower(powers[:2]) && isAllTheSamePower(powers[2:])) ||
-		(isAllTheSamePower(powers[:3]) && isAllTheSamePower(powers[3:])) {
+	if (isAllTheSamePower(hand[:2]) && isAllTheSamePower(hand[2:])) ||
+		(isAllTheSamePower(hand[:3]) && isAllTheSamePower(hand[3:])) {
 		return true
 	}
 
@@ -102,9 +89,9 @@ func hasFullHouse(h [5]Card) bool {
 }
 
 func hasFlush(h [5]Card) bool {
-	_, suits := getHandStats(h)
+	hand := h[:]
 
-	if isAllTheSameSuit(suits[:]) {
+	if isAllTheSameSuit(hand) {
 		return true
 	}
 
@@ -112,9 +99,9 @@ func hasFlush(h [5]Card) bool {
 }
 
 func hasStraight(h [5]Card) bool {
-	powers, _ := getHandStats(h)
+	hand := h[:]
 
-	if isSequence(powers[:]) {
+	if isSequence(hand) {
 		return true
 	}
 
@@ -122,12 +109,12 @@ func hasStraight(h [5]Card) bool {
 }
 
 func hasThreeOfAKind(h [5]Card) bool {
-	powers, _ := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	sortByPower(hand)
 
-	if isAllTheSamePower(powers[:3]) ||
-		isAllTheSamePower(powers[1:4]) ||
-		isAllTheSamePower(powers[2:]) {
+	if isAllTheSamePower(hand[:3]) ||
+		isAllTheSamePower(hand[1:4]) ||
+		isAllTheSamePower(hand[2:]) {
 		return true
 	}
 
@@ -135,13 +122,14 @@ func hasThreeOfAKind(h [5]Card) bool {
 }
 
 func hasTwoPairs(h [5]Card) bool {
-	powers, _ := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	sortByPower(hand)
 	pairValues := map[int]bool{}
 
-	for i := range len(powers) - 1 {
-		if powers[i] == powers[i+1] {
-			pairValues[powers[i]] = true
+	for i := 0; i < len(hand)-1; i++ {
+		power := getPower(hand[i])
+		if power == getPower(hand[i+1]) {
+			pairValues[power] = true
 		}
 	}
 
@@ -149,20 +137,13 @@ func hasTwoPairs(h [5]Card) bool {
 }
 
 func hasOnePair(h [5]Card) bool {
-	powers, _ := getHandStats(h)
-	slices.Sort(powers[:])
+	hand := h[:]
+	sortByPower(hand)
 
-	if isAllTheSamePower(powers[:2]) {
-		return true
-	}
-	if isAllTheSamePower(powers[1:3]) {
-		return true
-	}
-	if isAllTheSamePower(powers[2:4]) {
-		return true
-	}
-	if isAllTheSamePower(powers[3:]) {
-		return true
+	for i := range 3 {
+		if isAllTheSamePower(hand[i : i+2]) {
+			return true
+		}
 	}
 
 	return false
