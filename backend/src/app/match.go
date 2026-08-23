@@ -195,7 +195,7 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 func (m *Match) Showdown() []*Player {
 	winners := []*Player{}
 
-	// TODO: reveal hands and resolve pot
+	// TODO: calculate hands and resolve pot
 
 	return winners
 }

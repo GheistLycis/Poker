@@ -234,7 +234,8 @@ func (h *Hub) revealNextTableCard() {
 
 func (h *Hub) showdown() {
 	h.match.Showdown()
-	// TODO: communicate winners
+
+	// TODO: communicate hands and winners
 }
 
 func (h *Hub) handleLogin(c *Client, userName string) error {
