@@ -5,7 +5,7 @@ import type { ReceiveSeats } from './in/ReceiveSeats';
 import type { ReceiveSeatTurn } from './in/ReceiveSeatTurn';
 import type { ReceiveTableCards } from './in/ReceiveTableCards';
 import type { ReceiveUserInfo } from './in/ReceiveUserInfo';
-import type { ReceiveWinner } from './in/ReceiveWinner';
+import type { ReceiveWinners } from './in/ReceiveWinners';
 import type { SendUserAction } from './out/SendUserAction';
 import type { SendUserEmote } from './out/SendUserEmote';
 import type { SendUserLogin } from './out/SendUserLogin';
@@ -15,7 +15,7 @@ export type InConnMessage =
   | ReceiveOpponentsInfo
   | ReceivePotAmount
   | ReceiveTableCards
-  | ReceiveWinner
+  | ReceiveWinners
   | ReceiveSeats
   | ReceiveSeatTurn
   | ReceiveUserInfo;

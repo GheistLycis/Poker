@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"math/rand"
+	"slices"
 )
 
 type Match struct {
@@ -17,7 +18,6 @@ type Match struct {
 
 func NewMatch() *Match {
 	deck := &map[Card]bool{
-		CLUB_1:     false,
 		CLUB_2:     false,
 		CLUB_3:     false,
 		CLUB_4:     false,
@@ -30,7 +30,7 @@ func NewMatch() *Match {
 		CLUB_11:    false,
 		CLUB_12:    false,
 		CLUB_13:    false,
-		DIAMOND_1:  false,
+		CLUB_14:    false,
 		DIAMOND_2:  false,
 		DIAMOND_3:  false,
 		DIAMOND_4:  false,
@@ -43,7 +43,7 @@ func NewMatch() *Match {
 		DIAMOND_11: false,
 		DIAMOND_12: false,
 		DIAMOND_13: false,
-		HEART_1:    false,
+		DIAMOND_14: false,
 		HEART_2:    false,
 		HEART_3:    false,
 		HEART_4:    false,
@@ -56,7 +56,7 @@ func NewMatch() *Match {
 		HEART_11:   false,
 		HEART_12:   false,
 		HEART_13:   false,
-		SPADE_1:    false,
+		HEART_14:   false,
 		SPADE_2:    false,
 		SPADE_3:    false,
 		SPADE_4:    false,
@@ -69,6 +69,7 @@ func NewMatch() *Match {
 		SPADE_11:   false,
 		SPADE_12:   false,
 		SPADE_13:   false,
+		SPADE_14:   false,
 	}
 	seats := [8]*Seat{}
 	for i := range seats {
@@ -88,7 +89,7 @@ func (m *Match) InitRound() {
 	for card := range *m.Deck {
 		(*m.Deck)[card] = false
 	}
-	m.TableCards = [5]Card{BACK, BACK, BACK, BACK, BACK}
+	m.TableCards = [...]Card{BACK, BACK, BACK, BACK, BACK}
 	for range 3 {
 		m.RevealNextTableCard()
 	}
@@ -197,4 +198,38 @@ func (m *Match) Showdown() []*Player {
 	// TODO: reveal hands and resolve pot
 
 	return winners
+}
+
+func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
+	hand := [5]Card(slices.Concat(h[:], m.TableCards[:]))
+	highestCard := getHighest(hand[:])
+
+	if hasRoyalFlush(hand) {
+		return ROYAL_FLUSH, highestCard
+	}
+	if hasStraightFlush(hand) {
+		return STRAIGHT_FLUSH, highestCard
+	}
+	if hasFourOfAKind(hand) {
+		return FOUR_OF_A_KIND, highestCard
+	}
+	if hasFullHouse(hand) {
+		return FULL_HOUSE, highestCard
+	}
+	if hasFlush(hand) {
+		return FLUSH, highestCard
+	}
+	if hasStraight(hand) {
+		return STRAIGHT, highestCard
+	}
+	if hasThreeOfAKind(hand) {
+		return THREE_OF_A_KIND, highestCard
+	}
+	if hasTwoPairs(hand) {
+		return TWO_PAIRS, highestCard
+	}
+	if hasOnePair(hand) {
+		return ONE_PAIR, highestCard
+	}
+	return HIGH_CARD, highestCard
 }
