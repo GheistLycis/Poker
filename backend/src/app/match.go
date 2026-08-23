@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"slices"
-	"strings"
 )
 
 type Match struct {
@@ -204,32 +203,37 @@ func (m *Match) Showdown() []*Player {
 func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
 	cards := slices.Concat(m.TableCards[:], h[:])
 	slices.SortFunc(cards, func(a, b Card) int {
-		suitA := Suit(strings.Split(string(a), "_")[0])
-		suitB := Suit(strings.Split(string(b), "_")[0])
-		rankA := CardRank[suitA]
-		rankB := CardRank[suitB]
-
-		return slices.Index(rankA[:], a) - slices.Index(rankB[:], b)
+		return getPower(a) - getPower(b)
 	})
-	highestCard := cards[len(cards)-1]
+	hand := [5]Card(cards)
+	highestCard := hand[4]
 
-	// * Check ROYAL_FLUSH
-
-	// * Check STRAIGHT_FLUSH
-
-	// * Check FOUR_OF_A_KIND
-
-	// * Check FULL_HOUSE
-
-	// * Check FLUSH
-
-	// * Check STRAIGHT
-
-	// * Check THREE_OF_A_KIND
-
-	// * Check TWO_PAIRS
-
-	// * Check ONE_PAIR
-
+	if hasRoyalFlush(hand) {
+		return ROYAL_FLUSH, highestCard
+	}
+	if hasStraightFlush(hand) {
+		return STRAIGHT_FLUSH, highestCard
+	}
+	if hasFourOfAKind(hand) {
+		return FOUR_OF_A_KIND, highestCard
+	}
+	if hasFullHouse(hand) {
+		return FULL_HOUSE, highestCard
+	}
+	if hasFlush(hand) {
+		return FLUSH, highestCard
+	}
+	if hasStraight(hand) {
+		return STRAIGHT, highestCard
+	}
+	if hasThreeOfAKind(hand) {
+		return THREE_OF_A_KIND, highestCard
+	}
+	if hasTwoPairs(hand) {
+		return TWO_PAIRS, highestCard
+	}
+	if hasOnePair(hand) {
+		return ONE_PAIR, highestCard
+	}
 	return HIGH_CARD, highestCard
 }

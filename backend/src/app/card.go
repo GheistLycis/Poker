@@ -1,10 +1,14 @@
 package app
 
+import (
+	"slices"
+	"strings"
+)
+
 /*
 const (
 
 	BACK       Card = "BACK"
-	CLUB_1     Card = "CLUB_A"
 	CLUB_2     Card = "CLUB_2"
 	CLUB_3     Card = "CLUB_3"
 	CLUB_4     Card = "CLUB_4"
@@ -17,7 +21,7 @@ const (
 	CLUB_11    Card = "CLUB_JACK"
 	CLUB_12    Card = "CLUB_QUEEN"
 	CLUB_13    Card = "CLUB_KING"
-	DIAMOND_1  Card = "DIAMOND_A"
+	CLUB_14    Card = "CLUB_A"
 	DIAMOND_2  Card = "DIAMOND_2"
 	DIAMOND_3  Card = "DIAMOND_3"
 	DIAMOND_4  Card = "DIAMOND_4"
@@ -30,7 +34,7 @@ const (
 	DIAMOND_11 Card = "DIAMOND_JACK"
 	DIAMOND_12 Card = "DIAMOND_QUEEN"
 	DIAMOND_13 Card = "DIAMOND_KING"
-	HEART_1    Card = "HEART_A"
+	DIAMOND_14 Card = "DIAMOND_A"
 	HEART_2    Card = "HEART_2"
 	HEART_3    Card = "HEART_3"
 	HEART_4    Card = "HEART_4"
@@ -43,7 +47,7 @@ const (
 	HEART_11   Card = "HEART_JACK"
 	HEART_12   Card = "HEART_QUEEN"
 	HEART_13   Card = "HEART_KING"
-	SPADE_1    Card = "SPADE_A"
+	HEART_14   Card = "HEART_A"
 	SPADE_2    Card = "SPADE_2"
 	SPADE_3    Card = "SPADE_3"
 	SPADE_4    Card = "SPADE_4"
@@ -56,6 +60,7 @@ const (
 	SPADE_11   Card = "SPADE_JACK"
 	SPADE_12   Card = "SPADE_QUEEN"
 	SPADE_13   Card = "SPADE_KING"
+	SPADE_14   Card = "SPADE_A"
 
 )
 */
@@ -197,4 +202,38 @@ var CardRank = map[Suit][13]Card{
 		SPADE_13,
 		SPADE_14,
 	},
+}
+
+func getSuit(c Card) Suit {
+	return Suit(strings.Split(string(c), "_")[0])
+}
+
+func getPower(c Card) int {
+	suit := getSuit(c)
+	suitRank := CardRank[suit]
+
+	return slices.Index(suitRank[:], c) + 2
+}
+
+func isAllTheSameSuit(suits []Suit) bool {
+	return !slices.ContainsFunc(suits, func(s Suit) bool {
+		return s != suits[0]
+	})
+}
+
+func isAllTheSamePower(powers []int) bool {
+	return !slices.ContainsFunc(powers, func(p int) bool {
+		return p != powers[0]
+	})
+}
+
+func isSequence(powers []int) bool {
+	slices.Sort(powers)
+	for i := range len(powers) - 1 {
+		if powers[i+1] != powers[i]+1 {
+			return false
+		}
+	}
+
+	return true
 }
