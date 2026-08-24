@@ -1,5 +1,7 @@
 package app
 
+import "slices"
+
 /*
 const (
 
@@ -47,9 +49,9 @@ var HandRank = [...]Hand{
 func hasRoyalFlush(h [5]Card) bool {
 	hand := h[:]
 	highest := getHighest(hand)
-	acePower := getPower(SPADE_14) // * could be any suit
+	highestIsAce := slices.Contains([]Card{CLUB_14, DIAMOND_14, HEART_14, SPADE_14}, highest)
 
-	if isSequence(hand) && getPower(highest) == acePower && isAllTheSameSuit(hand) {
+	if isSequence(hand) && highestIsAce && isAllTheSameSuit(hand) {
 		return true
 	}
 
