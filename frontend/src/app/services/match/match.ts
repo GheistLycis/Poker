@@ -1,6 +1,7 @@
 import { computed, inject, Service } from '@angular/core';
 import type { PlayerAction } from '@app-types/PlayerAction';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
+import type { SeatIndex } from '@app-types/SeatIndex';
 import { ApiService } from '@services/api/api';
 import { WebSocketConnStateEnum } from '@services/api/types/ConnState';
 import { map, shareReplay } from 'rxjs';
@@ -24,7 +25,7 @@ export class MatchService {
     .getMessages('match.table-cards')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
 
-  isPlayerTurn(playerSeat: number) {
+  isPlayerTurn(playerSeat: SeatIndex) {
     return this.seatTurn$.pipe(map((seatTurn) => seatTurn === playerSeat));
   }
 

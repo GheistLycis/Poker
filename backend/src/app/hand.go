@@ -47,7 +47,7 @@ var HandRank = [...]Hand{
 func hasRoyalFlush(h [5]Card) bool {
 	hand := h[:]
 	highest := getHighest(hand)
-	const acePower int = 14
+	acePower := getPower(SPADE_14) // * could be any suit
 
 	if isSequence(hand) && getPower(highest) == acePower && isAllTheSameSuit(hand) {
 		return true
