@@ -5,11 +5,13 @@ import (
 	"testing"
 )
 
+type testCase struct {
+	expected bool
+	hand     [7]Card
+}
+
 func TestHasRoyalFlush(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{SPADE_14, CLUB_2, SPADE_11, DIAMOND_5, SPADE_13, SPADE_10, SPADE_12},
@@ -44,10 +46,7 @@ func TestHasRoyalFlush(t *testing.T) {
 }
 
 func TestHasStraightFlush(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{HEART_9, CLUB_2, HEART_5, DIAMOND_3, HEART_7, HEART_6, HEART_8},
@@ -82,10 +81,7 @@ func TestHasStraightFlush(t *testing.T) {
 }
 
 func TestHasFourOfAKind(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_9, CLUB_2, DIAMOND_9, DIAMOND_5, HEART_9, HEART_7, SPADE_9},
@@ -116,10 +112,7 @@ func TestHasFourOfAKind(t *testing.T) {
 }
 
 func TestHasFullHouse(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_2, CLUB_5, DIAMOND_2, SPADE_9, DIAMOND_5, HEART_2, HEART_10},
@@ -154,10 +147,7 @@ func TestHasFullHouse(t *testing.T) {
 }
 
 func TestHasFlush(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{HEART_2, CLUB_9, HEART_5, DIAMOND_3, HEART_9, HEART_11, HEART_14},
@@ -184,10 +174,7 @@ func TestHasFlush(t *testing.T) {
 }
 
 func TestHasStraight(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_5, DIAMOND_2, DIAMOND_6, HEART_3, HEART_7, SPADE_8, CLUB_9},
@@ -222,10 +209,7 @@ func TestHasStraight(t *testing.T) {
 }
 
 func TestHasThreeOfAKind(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_7, CLUB_2, DIAMOND_7, SPADE_5, DIAMOND_11, HEART_7, HEART_13},
@@ -256,10 +240,7 @@ func TestHasThreeOfAKind(t *testing.T) {
 }
 
 func TestHasTwoPairs(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_4, CLUB_2, DIAMOND_4, SPADE_9, DIAMOND_5, HEART_9, HEART_11},
@@ -298,10 +279,7 @@ func TestHasTwoPairs(t *testing.T) {
 }
 
 func TestHasOnePair(t *testing.T) {
-	tests := []struct {
-		expected bool
-		hand     [7]Card
-	}{
+	tests := []testCase{
 		{
 			expected: true,
 			hand:     [7]Card{CLUB_6, CLUB_9, DIAMOND_6, SPADE_5, HEART_11, HEART_13, DIAMOND_2},
