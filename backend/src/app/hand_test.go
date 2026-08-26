@@ -10,12 +10,12 @@ type testCase struct {
 	hand     [7]Card
 }
 
-func run(t *testing.T, tests []testCase) {
+func run(t *testing.T, tests []testCase, fn func([7]Card) bool) {
 	for _, tt := range tests {
 		tName := fmt.Sprint(tt.hand)
 
 		t.Run(tName, func(t *testing.T) {
-			if res := hasRoyalFlush(tt.hand); res != tt.expected {
+			if res := fn(tt.hand); res != tt.expected {
 				t.Errorf("%v: got %v; expected %v", tt.hand, res, tt.expected)
 			}
 		})
@@ -46,7 +46,7 @@ func TestHasRoyalFlush(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasRoyalFlush)
 }
 
 func TestHasStraightFlush(t *testing.T) {
@@ -73,7 +73,7 @@ func TestHasStraightFlush(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasStraightFlush)
 }
 
 func TestHasFourOfAKind(t *testing.T) {
@@ -96,7 +96,7 @@ func TestHasFourOfAKind(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasFourOfAKind)
 }
 
 func TestHasFullHouse(t *testing.T) {
@@ -123,7 +123,7 @@ func TestHasFullHouse(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasFullHouse)
 }
 
 func TestHasFlush(t *testing.T) {
@@ -142,7 +142,7 @@ func TestHasFlush(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasFlush)
 }
 
 func TestHasStraight(t *testing.T) {
@@ -169,7 +169,7 @@ func TestHasStraight(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasStraight)
 }
 
 func TestHasThreeOfAKind(t *testing.T) {
@@ -192,7 +192,7 @@ func TestHasThreeOfAKind(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasThreeOfAKind)
 }
 
 func TestHasTwoPairs(t *testing.T) {
@@ -223,7 +223,7 @@ func TestHasTwoPairs(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasTwoPairs)
 }
 
 func TestHasOnePair(t *testing.T) {
@@ -242,5 +242,5 @@ func TestHasOnePair(t *testing.T) {
 		},
 	}
 
-	run(t, tests)
+	run(t, tests, hasOnePair)
 }
