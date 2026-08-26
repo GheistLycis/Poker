@@ -201,8 +201,7 @@ func (m *Match) Showdown() []*Player {
 }
 
 func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
-	// TODO: hand is actually [7]Card
-	hand := [5]Card(slices.Concat(h[:], m.TableCards[:]))
+	hand := [7]Card(slices.Concat(h[:], m.TableCards[:]))
 	highestCard := getHighest(hand[:])
 
 	if hasRoyalFlush(hand) {

@@ -46,108 +46,118 @@ var HandRank = [...]Hand{
 	ROYAL_FLUSH,
 }
 
-func hasRoyalFlush(h [5]Card) bool {
-	hand := h[:]
-	highest := getHighest(hand)
-	highestIsAce := slices.Contains([]Card{CLUB_14, DIAMOND_14, HEART_14, SPADE_14}, highest)
+func hasRoyalFlush(h [7]Card) bool {
+	highestIsAce := slices.Contains(
+		[]Card{CLUB_14, DIAMOND_14, HEART_14, SPADE_14},
+		getHighest(h[:]),
+	)
 
-	if isSequence(hand) && highestIsAce && isAllTheSameSuit(hand) {
-		return true
-	}
-
-	return false
+	return highestIsAce && hasStraightFlush(h)
 }
 
-func hasStraightFlush(h [5]Card) bool {
-	hand := h[:]
-
-	if isSequence(hand) && isAllTheSameSuit(hand) {
-		return true
-	}
-
-	return false
-}
-
-func hasFourOfAKind(h [5]Card) bool {
-	hand := h[:]
-	sortByPower(hand)
-
-	if isAllTheSamePower(hand[:4]) || isAllTheSamePower(hand[1:]) {
-		return true
-	}
-
-	return false
-}
-
-func hasFullHouse(h [5]Card) bool {
-	hand := h[:]
-	sortByPower(hand)
-
-	if (isAllTheSamePower(hand[:2]) && isAllTheSamePower(hand[2:])) ||
-		(isAllTheSamePower(hand[:3]) && isAllTheSamePower(hand[3:])) {
-		return true
-	}
-
-	return false
-}
-
-func hasFlush(h [5]Card) bool {
-	hand := h[:]
-
-	if isAllTheSameSuit(hand) {
-		return true
-	}
-
-	return false
-}
-
-func hasStraight(h [5]Card) bool {
-	hand := h[:]
-
-	if isSequence(hand) {
-		return true
-	}
-
-	return false
-}
-
-func hasThreeOfAKind(h [5]Card) bool {
-	hand := h[:]
-	sortByPower(hand)
-
-	if isAllTheSamePower(hand[:3]) ||
-		isAllTheSamePower(hand[1:4]) ||
-		isAllTheSamePower(hand[2:]) {
-		return true
-	}
-
-	return false
-}
-
-func hasTwoPairs(h [5]Card) bool {
-	hand := h[:]
-	sortByPower(hand)
-	pairValues := map[int]bool{}
-
-	for i := 0; i < len(hand)-1; i++ {
-		power := getPower(hand[i])
-		if power == getPower(hand[i+1]) {
-			pairValues[power] = true
+func hasStraightFlush(h [7]Card) bool {
+	suitMap := map[Suit][]Card{}
+	for _, c := range h {
+		if c != BACK {
+			suit := getSuit(c)
+			suitMap[suit] = append(suitMap[suit], c)
 		}
 	}
 
-	return len(pairValues) >= 2
+	for _, cards := range suitMap {
+		if len(cards) >= 5 {
+			hand := [7]Card{}
+			copy(hand[:], cards)
+			for i := range hand {
+				if hand[i] == "" {
+					hand[i] = BACK
+				}
+			}
+			if hasStraight(hand) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
-func hasOnePair(h [5]Card) bool {
-	hand := h[:]
-	sortByPower(hand)
+func hasFourOfAKind(h [7]Card) bool {
+	return hasNOfAKind(h[:], 4)
+}
 
-	for i := range 3 {
-		if isAllTheSamePower(hand[i : i+2]) {
+func hasFullHouse(h [7]Card) bool {
+	hasTriple := false
+	pairsOrBetter := 0
+	for _, count := range powerCounts(h[:]) {
+		if count >= 3 {
+			hasTriple = true
+		}
+		if count >= 2 {
+			pairsOrBetter++
+		}
+	}
+
+	return hasTriple && pairsOrBetter >= 2
+}
+
+func hasFlush(h [7]Card) bool {
+	suitMap := map[Suit]int{}
+	for _, c := range h {
+		suit := getSuit(c)
+		suitMap[suit]++
+		if suitMap[suit] == 5 {
 			return true
 		}
 	}
 
 	return false
+}
+
+func hasStraight(h [7]Card) bool {
+	powerSet := map[int]bool{}
+	for _, c := range h {
+		if c != BACK {
+			powerSet[getPower(c)] = true
+		}
+	}
+
+	powers := make([]int, 0, len(powerSet))
+	for p := range powerSet {
+		powers = append(powers, p)
+	}
+	slices.Sort(powers)
+
+	run := 1
+	for i := 1; i < len(powers); i++ {
+		if powers[i] != powers[i-1]+1 {
+			run = 1
+			continue
+		}
+		run++
+		if run >= 5 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasThreeOfAKind(h [7]Card) bool {
+	return hasNOfAKind(h[:], 3)
+}
+
+func hasTwoPairs(h [7]Card) bool {
+	pairs := 0
+	for _, count := range powerCounts(h[:]) {
+		if count >= 2 {
+			pairs++
+		}
+	}
+
+	return pairs >= 2
+}
+
+func hasOnePair(h [7]Card) bool {
+	return hasNOfAKind(h[:], 2)
 }

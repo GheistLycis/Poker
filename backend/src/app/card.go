@@ -205,42 +205,21 @@ var CardRank = map[Suit][13]Card{
 }
 
 func getSuit(c Card) Suit {
+	if c == BACK {
+		return ""
+	}
+
 	return Suit(strings.Split(string(c), "_")[0])
 }
 
 func getPower(c Card) int {
 	suit := getSuit(c)
+	if suit == "" {
+		return 0
+	}
 	suitRank := CardRank[suit]
 
 	return slices.Index(suitRank[:], c) + 2
-}
-
-func isAllTheSameSuit(cards []Card) bool {
-	return !slices.ContainsFunc(cards, func(c Card) bool {
-		return getSuit(c) != getSuit(cards[0])
-	})
-}
-
-func isAllTheSamePower(cards []Card) bool {
-	return !slices.ContainsFunc(cards, func(c Card) bool {
-		return getPower(c) != getPower(cards[0])
-	})
-}
-
-func isSequence(cards []Card) bool {
-	powers := make([]int, len(cards))
-	for i, c := range cards {
-		powers[i] = getPower(c)
-	}
-	slices.Sort(powers)
-
-	for i := range len(powers) - 1 {
-		if powers[i+1] != powers[i]+1 {
-			return false
-		}
-	}
-
-	return true
 }
 
 func getHighest(cards []Card) Card {
@@ -254,8 +233,38 @@ func getHighest(cards []Card) Card {
 	return highest
 }
 
-func sortByPower(cards []Card) {
-	slices.SortFunc(cards, func(a, b Card) int {
+func isAllTheSamePower(cards []Card) bool {
+	return !slices.ContainsFunc(cards, func(c Card) bool {
+		return getPower(c) != getPower(cards[0])
+	})
+}
+
+func sortByPower(cards []Card) []Card {
+	sorted := make([]Card, len(cards))
+	copy(sorted, cards)
+
+	slices.SortFunc(sorted, func(a, b Card) int {
 		return getPower(a) - getPower(b)
 	})
+
+	return sorted
+}
+
+func powerCounts(h []Card) map[int]int {
+	counts := map[int]int{}
+	for _, c := range h {
+		counts[getPower(c)]++
+	}
+
+	return counts
+}
+
+func hasNOfAKind(h []Card, n int) bool {
+	for _, c := range powerCounts(h) {
+		if c >= n {
+			return true
+		}
+	}
+
+	return false
 }
