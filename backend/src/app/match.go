@@ -86,48 +86,60 @@ func NewMatch() *Match {
 
 func (m *Match) InitRound() {
 	m.LastBet = 0
+
 	for card := range *m.Deck {
 		(*m.Deck)[card] = false
 	}
+
 	m.TableCards = [...]Card{BACK, BACK, BACK, BACK, BACK}
 	for range 3 {
 		m.RevealNextTableCard()
 	}
+
 	for i := range m.RoundSeats {
 		m.RoundSeats[i] = nil
 	}
-	for i, s := range m.Seats {
+	i := 0
+	for _, s := range m.Seats {
 		if s.Player != nil {
 			m.RoundSeats[i] = s
+			i++
 		}
 	}
+
 	for _, s := range m.RoundSeats {
 		if s == nil || s.Player == nil {
 			continue
 		}
-
 		var hand [2]Card
-
 		for i := range hand {
 			hand[i] = m.takeFromDeck()
 		}
 		s.Player.Cards = hand
 	}
+
 	m.SeatTurn = m.RoundSeats[0]
 }
 
 func (m *Match) PassTurn() *Seat {
-	var nextSeat *Seat
-	var currentRoundSeatIdx int
-	n := len(m.RoundSeats)
-
-	for i := 1; i <= n; i++ {
-		next := m.RoundSeats[(currentRoundSeatIdx+i)%n]
-		if next != nil && next.Player != nil {
-			nextSeat = next
+	var currSeatRoundPosition int
+	for i, s := range m.RoundSeats {
+		if s == m.SeatTurn {
+			currSeatRoundPosition = i
 			break
 		}
 	}
+
+	totalRoundSeats := 0
+	for _, s := range m.RoundSeats {
+		if s != nil {
+			totalRoundSeats++
+		}
+	}
+
+	nextSeatRoundPosition := (currSeatRoundPosition + 1) % totalRoundSeats
+	nextSeat := m.RoundSeats[nextSeatRoundPosition]
+
 	m.SeatTurn = nextSeat
 
 	return nextSeat
@@ -207,9 +219,11 @@ func (m *Match) Showdown() []*Player {
 
 	handMap := map[*Player]playerHand{}
 	for _, s := range m.RoundSeats {
-		player := s.Player
-		hand, highestCard := m.calculateHand(player.Cards)
-		handMap[player] = playerHand{hand: hand, highestCard: highestCard}
+		if s != nil {
+			player := s.Player
+			hand, highestCard := m.calculateHand(player.Cards)
+			handMap[player] = playerHand{hand: hand, highestCard: highestCard}
+		}
 	}
 
 	highestHand := HIGH_CARD
