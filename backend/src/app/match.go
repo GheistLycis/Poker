@@ -173,7 +173,11 @@ func (m *Match) takeFromDeck() Card {
 	return nextCard
 }
 
-// v < 0 transfers from pot to player; v > 0 transfers from player to pot
+/*
+v < 0 transfers from pot to player; v > 0 transfers from player to pot
+
+returns error if payer has unsufficient balance to pay
+*/
 func (m *Match) DoPotTransaction(v int, p *Player) error {
 	if v > 0 {
 		if p.Score < v {
