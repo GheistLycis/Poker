@@ -90,7 +90,7 @@ func (h *Hub) endTurn() {
 	} else {
 		h.passTurn()
 	}
-	h.sendPlayersInfo()
+	h.sendPlayersInfo(true)
 }
 
 func (h *Hub) registerClient(c *websocket.Conn) *Client {
@@ -122,7 +122,7 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 		if h.match.SeatTurn != nil && playerSeatIdx == h.match.SeatTurn.Index {
 			h.endTurn()
 		} else {
-			h.sendPlayersInfo()
+			h.sendPlayersInfo(true)
 		}
 	}
 	delete(h.clients, addr)
@@ -153,7 +153,7 @@ func (h *Hub) broadcast(m *Message[any]) {
 }
 
 // TODO: active players in the round are never informed to clients
-func (h *Hub) sendPlayersInfo() {
+func (h *Hub) sendPlayersInfo(hideOpponentsHands bool) {
 	var loggedInClients []*Client
 	for _, c := range h.clients {
 		if c.player != nil {
@@ -171,7 +171,7 @@ func (h *Hub) sendPlayersInfo() {
 		opponents := []*Player{}
 		for _, c2 := range loggedInClients {
 			if c1 != c2 {
-				opponent := newPlayer(c2.player, true)
+				opponent := newPlayer(c2.player, hideOpponentsHands)
 				opponents = append(opponents, opponent)
 			}
 		}
@@ -202,6 +202,7 @@ func (h *Hub) sendSeatsInfo() {
 
 func (h *Hub) initRound() {
 	h.match.InitRound()
+
 	tableCardsMsg := newServerMessage(ServerMessageArgs[any]{
 		Type:    MATCH_TABLE_CARDS,
 		Payload: h.match.TableCards,
@@ -233,9 +234,18 @@ func (h *Hub) revealNextTableCard() {
 }
 
 func (h *Hub) showdown() {
-	h.match.Showdown()
+	winners := h.match.Showdown()
+	winnersIds := make([]string, len(winners))
+	for i, w := range winners {
+		winnersIds[i] = w.Id.String()
+	}
+	winnersMsg := newServerMessage(ServerMessageArgs[any]{
+		Type:    MATCH_WINNERS,
+		Payload: winnersIds,
+	})
 
-	// TODO: communicate hands and winners
+	h.broadcast(winnersMsg)
+	h.sendPlayersInfo(false)
 }
 
 func (h *Hub) handleLogin(c *Client, userName string) error {
@@ -254,7 +264,7 @@ func (h *Hub) handleLogin(c *Client, userName string) error {
 	availableSeat.Player = player
 	c.player = player
 
-	h.sendPlayersInfo()
+	h.sendPlayersInfo(true)
 	h.sendSeatsInfo()
 
 	if h.match.RoundSeats == [8]*app.Seat{} {

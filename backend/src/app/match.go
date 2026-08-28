@@ -173,6 +173,7 @@ func (m *Match) takeFromDeck() Card {
 	return nextCard
 }
 
+// v < 0 transfers from pot to player; v > 0 transfers from player to pot
 func (m *Match) DoPotTransaction(v int, p *Player) error {
 	if v > 0 {
 		if p.Score < v {
@@ -192,17 +193,64 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 	return nil
 }
 
+type playerHand struct {
+	hand        Hand
+	highestCard Card
+}
+
 func (m *Match) Showdown() []*Player {
 	winners := []*Player{}
 
-	// TODO: calculate hands and resolve pot
+	handMap := map[*Player]playerHand{}
+	for _, s := range m.RoundSeats {
+		player := s.Player
+		hand, highestCard := m.calculateHand(player.Cards)
+		handMap[player] = playerHand{hand: hand, highestCard: highestCard}
+	}
+
+	highestHand := HIGH_CARD
+	for _, h := range handMap {
+		if slices.Index(HandRank[:], h.hand) > slices.Index(HandRank[:], highestHand) {
+			highestHand = h.hand
+		}
+	}
+
+	for p, h := range handMap {
+		if h.hand == highestHand {
+			winners = append(winners, p)
+		}
+	}
+
+	if len(winners) > 1 {
+		highestCard := BACK
+		for _, p := range winners {
+			playerHighestCard := handMap[p].highestCard
+			if getPower(playerHighestCard) > getPower(highestCard) {
+				highestCard = playerHighestCard
+			}
+		}
+
+		playersWithHighestCard := []*Player{}
+		for _, p := range winners {
+			if handMap[p].highestCard == highestCard {
+				playersWithHighestCard = append(playersWithHighestCard, p)
+			}
+		}
+
+		winners = playersWithHighestCard
+	}
+
+	paymentAmount := m.Pot / len(winners)
+	for _, w := range winners {
+		m.DoPotTransaction(-paymentAmount, w)
+	}
 
 	return winners
 }
 
 func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
 	hand := [7]Card(slices.Concat(h[:], m.TableCards[:]))
-	highestCard := getHighest(hand[:])
+	highestCard := getHighest(hand[:]) // TODO: should come from the matching hand, not the hand as a whole
 
 	if hasRoyalFlush(hand) {
 		return ROYAL_FLUSH, highestCard
