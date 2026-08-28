@@ -8,14 +8,16 @@ import (
 	"net"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Hub struct {
-	clients    map[net.Addr]*Client
-	mailbox    chan HubMsg
-	match      *app.Match
-	turnTicker *time.Ticker
+	clients                  map[net.Addr]*Client
+	mailbox                  chan HubMsg
+	match                    *app.Match
+	turnTicker               *time.Ticker
+	lastActionIdempotencyKey string
 }
 
 const TurnDuration = 15 * time.Second
@@ -81,7 +83,8 @@ func (h *Hub) endTurn() {
 
 	if isBettingRoundOver {
 		if h.match.AllTableCardsAreRevealed() {
-			h.showdown()
+			h.showdown(false)
+			time.Sleep(5 * time.Second)
 			h.initRound()
 		} else {
 			h.revealNextTableCard()
@@ -107,6 +110,7 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 	if client == nil {
 		return
 	}
+
 	player := client.player
 	if player != nil {
 		playerSeatIdx := player.SeatIndex
@@ -125,7 +129,10 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 			h.sendPlayersInfo(true)
 		}
 	}
+
+	h.assertMinQuorum()
 	delete(h.clients, addr)
+
 	playerName := "N/A"
 	if player != nil {
 		playerName = player.Name
@@ -152,7 +159,6 @@ func (h *Hub) broadcast(m *Message[any]) {
 	}
 }
 
-// TODO: active players in the round are never informed to clients
 func (h *Hub) sendPlayersInfo(hideOpponentsHands bool) {
 	var loggedInClients []*Client
 	for _, c := range h.clients {
@@ -208,6 +214,8 @@ func (h *Hub) initRound() {
 		Payload: h.match.TableCards,
 	})
 	h.broadcast(tableCardsMsg)
+
+	h.lastActionIdempotencyKey = ""
 }
 
 func (h *Hub) passTurn() {
@@ -219,6 +227,8 @@ func (h *Hub) passTurn() {
 		},
 	})
 	h.broadcast(seatTurnMsg)
+
+	h.lastActionIdempotencyKey = ""
 }
 
 func (h *Hub) revealNextTableCard() {
@@ -233,11 +243,11 @@ func (h *Hub) revealNextTableCard() {
 	h.broadcast(tableCardsMsg)
 }
 
-func (h *Hub) showdown() {
+func (h *Hub) showdown(hideOpponentsHands bool) {
 	winners := h.match.Showdown()
-	winnersIds := make([]string, len(winners))
+	winnersIds := make([]uuid.UUID, len(winners))
 	for i, w := range winners {
-		winnersIds[i] = w.Id.String()
+		winnersIds[i] = w.Id
 	}
 	winnersMsg := newServerMessage(ServerMessageArgs[any]{
 		Type:    MATCH_WINNERS,
@@ -245,7 +255,7 @@ func (h *Hub) showdown() {
 	})
 
 	h.broadcast(winnersMsg)
-	h.sendPlayersInfo(false)
+	h.sendPlayersInfo(hideOpponentsHands)
 }
 
 func (h *Hub) handleLogin(c *Client, userName string) error {
@@ -284,6 +294,14 @@ func (h *Hub) handleLogin(c *Client, userName string) error {
 }
 
 func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) error {
+	actionIdempotencyKey := c.addr.String() + "_" + string(action)
+	if h.lastActionIdempotencyKey == actionIdempotencyKey {
+		return fmt.Errorf("duplicated %s action received from client %s (%s)", action, c.addr, c.player.Name)
+	}
+	h.lastActionIdempotencyKey = actionIdempotencyKey
+
+	player := c.player
+
 	switch action {
 	case app.BET:
 		if amount == nil {
@@ -293,33 +311,54 @@ func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) erro
 		if value <= h.match.LastBet {
 			return errors.New("bets/raises are only allowed if greater than the last bet")
 		}
-		h.match.DoPotTransaction(value, c.player)
+		h.match.DoPotTransaction(value, player)
 		h.match.LastBet = value
 
 	case app.CALL:
-		h.match.DoPotTransaction(h.match.LastBet, c.player)
+		h.match.DoPotTransaction(h.match.LastBet, player)
 
 	case app.FOLD:
-		playerSeatIdx := c.player.SeatIndex
-		var newRoundSeats [8]*app.Seat
-		for i, s := range h.match.RoundSeats {
-			if s != nil && s.Index != playerSeatIdx {
-				newRoundSeats[i] = s
+		for _, s := range h.match.RoundSeats {
+			if s != nil && s.Index == player.SeatIndex {
+				s = nil
+				break
 			}
 		}
-		h.match.RoundSeats = newRoundSeats
+		player.Cards = [2]app.Card{}
 	}
 
-	if action == app.BET || action == app.CALL {
-		potAmountMsg := newServerMessage(ServerMessageArgs[any]{
-			Type: MATCH_POT_AMOUNT,
-			Payload: map[string]int{
-				"amount": h.match.Pot,
-			},
-		})
-		h.broadcast(potAmountMsg)
-	}
-	h.endTurn()
+	opponentActionMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: OPPONENTS_ACTION,
+		Payload: struct {
+			Player uuid.UUID        `json:"player"`
+			Action app.PlayerAction `json:"action"`
+			Amount *int             `json:"amount,omitempty"`
+		}{
+			Player: player.Id,
+			Action: action,
+			Amount: amount,
+		},
+	})
+	h.broadcast(opponentActionMsg)
+
+	potAmountMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: MATCH_POT_AMOUNT,
+		Payload: map[string]int{
+			"amount": h.match.Pot,
+		},
+	})
+	h.broadcast(potAmountMsg)
+
+	h.sendPlayersInfo(true)
+	h.assertMinQuorum()
 
 	return nil
+}
+
+func (h *Hub) assertMinQuorum() {
+	if h.match.HasMinQuorum() {
+		h.endTurn()
+	} else {
+		h.showdown(true)
+	}
 }
