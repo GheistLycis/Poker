@@ -299,3 +299,14 @@ func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
 	}
 	return HIGH_CARD, highestCard
 }
+
+func (m *Match) HasMinQuorum() bool {
+	roundPlayersCount := 0
+	for _, s := range m.RoundSeats {
+		if s != nil {
+			roundPlayersCount++
+		}
+	}
+
+	return roundPlayersCount >= 2
+}
