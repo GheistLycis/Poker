@@ -2,7 +2,7 @@
   @if (opponent$ | async; as opponent) {
     <p
       [ngClass]="{ 'text-red-700': isOpponentTurn$ | async }"
-      class="max-w-[13ch] truncate font-semibold"
+      class="max-w-[13ch] truncate font-semibold duration-200 ease-out"
     >
       {{ opponent.name }}
     </p>

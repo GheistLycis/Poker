@@ -7,6 +7,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { HasPlayerChangedPipe } from '@pipes/has-player-changed/has-player-changed-pipe';
 import { routes } from './app.routes';
 
 registerLocaleData(localePt, 'pt-BR');
@@ -17,5 +18,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     { provide: DEFAULT_CURRENCY_CODE, useValue: 'BRL' },
+    HasPlayerChangedPipe,
   ],
 };

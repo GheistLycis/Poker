@@ -1,10 +1,13 @@
 <div class="flex justify-center gap-2">
   @if (cards$ | async; as cards) {
     @for (card of cards; track $index) {
+      @let isCardReveal = !isUser() && !!card && card !== CARD_ENUM.BACK;
+
       <app-card
-        [variant]="card ?? CARD_ENUM.BACK"
+        [variant]="card"
         [owner]="isUser() ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
-        animate.enter="drop-in"
+        [animate.enter]="isCardReveal ? 'fade-in' : 'drop-in'"
+        [animate.leave]="isCardReveal ? 'fade-out' : undefined"
       />
     }
   }

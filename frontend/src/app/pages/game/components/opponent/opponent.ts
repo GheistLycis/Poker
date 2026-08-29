@@ -1,9 +1,9 @@
 import { AsyncPipe, CurrencyPipe, NgClass } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import type { SeatIndex } from '@app-types/SeatIndex';
 import { MatchService } from '@services/match/match';
-import { combineLatest, map, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs';
 import { CardsHand } from '../cards-hand/cards-hand';
 
 @Component({
@@ -17,10 +17,14 @@ export class Opponent {
   seat = input.required<SeatIndex>();
 
   private seat$ = toObservable(this.seat);
-  opponent$ = combineLatest([
-    this.matchService.opponents$,
-    this.matchService.seats$,
-    this.seat$,
-  ]).pipe(map(([opponents, seats, seat]) => opponents.find(({ id }) => id === seats[seat])));
+  opponent$ = this.seat$.pipe(
+    switchMap((seat) => this.matchService.getPlayerAtSeat(seat)),
+    filter((opponent) => !!opponent),
+  );
   isOpponentTurn$ = this.seat$.pipe(switchMap((seat) => this.matchService.isPlayerTurn(seat)));
+  opponentWon = outputFromObservable(
+    this.opponent$.pipe(
+      switchMap((opponent) => this.matchService.playerWon(opponent.id).pipe(map(() => opponent))),
+    ),
+  );
 }
