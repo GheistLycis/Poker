@@ -10,10 +10,10 @@
 
 <div class="absolute top-1/2 left-1/2 flex -translate-x-1/2 gap-6">
   <div class="flex gap-2">
-    @for (card of cards$ | async; track card) {
+    @for (card of cards$ | async; track $index + card) {
       <ng-container *ngTemplateOutlet="tableCard; context: { variant: card, animated: true }" />
     } @empty {
-      @for (i of [1, 2, 3, 4, 5]; track i) {
+      @for (val of 5 | range; track val) {
         <ng-container *ngTemplateOutlet="tableCard; context: { variant: null }" />
       }
     }

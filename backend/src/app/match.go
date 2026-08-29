@@ -214,7 +214,7 @@ type playerHand struct {
 	highestCard Card
 }
 
-func (m *Match) Showdown() []*Player {
+func (m *Match) Showdown() ([]*Player, error) {
 	winners := []*Player{}
 
 	handMap := map[*Player]playerHand{}
@@ -239,6 +239,9 @@ func (m *Match) Showdown() []*Player {
 		}
 	}
 
+	if len(winners) == 0 {
+		return nil, errors.New("zero winners")
+	}
 	if len(winners) > 1 {
 		highestCard := BACK
 		for _, p := range winners {
@@ -263,7 +266,7 @@ func (m *Match) Showdown() []*Player {
 		m.DoPotTransaction(-paymentAmount, w)
 	}
 
-	return winners
+	return winners, nil
 }
 
 func (m *Match) calculateHand(h [2]Card) (Hand, Card) {

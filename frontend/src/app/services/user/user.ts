@@ -1,9 +1,10 @@
 import { computed, DestroyRef, effect, inject, Service } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { HasPlayerChangedPipe } from '@pipes/has-player-changed/has-player-changed-pipe';
 import { ApiService } from '@services/api/api';
 import { MatchService } from '@services/match/match';
-import { take, tap } from 'rxjs';
+import { distinctUntilChanged, take, tap } from 'rxjs';
 import { USER_STORAGE_KEY } from './consts';
 import type { LoginPayload } from './types/LoginPayload';
 
@@ -13,8 +14,11 @@ export class UserService {
   private router = inject(Router);
   private apiService = inject(ApiService);
   private matchService = inject(MatchService);
+  private hasPlayerChangedPipe = inject(HasPlayerChangedPipe);
 
-  private user$ = this.apiService.getMessages('user.info');
+  private user$ = this.apiService
+    .getMessages('user.info')
+    .pipe(distinctUntilChanged((prev, curr) => !this.hasPlayerChangedPipe.transform([prev, curr])));
   user = toSignal(this.user$);
   isLoggedIn = computed(() => !!this.user());
 

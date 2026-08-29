@@ -130,14 +130,18 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 		}
 	}
 
-	h.assertMinQuorum()
 	delete(h.clients, addr)
-
 	playerName := "N/A"
 	if player != nil {
 		playerName = player.Name
 	}
 	log.Printf("client '%s (%s)' unregistered (current clients = %d)", addr, playerName, len(h.clients))
+
+	if h.match.HasMinQuorum() {
+		h.endTurn()
+	} else {
+		h.showdown(true)
+	}
 }
 
 func (h *Hub) broadcast(m *Message[any]) {
@@ -220,13 +224,15 @@ func (h *Hub) initRound() {
 
 func (h *Hub) passTurn() {
 	nextSeatToPlay := h.match.PassTurn()
-	seatTurnMsg := newServerMessage(ServerMessageArgs[any]{
-		Type: MATCH_SEAT_TURN,
-		Payload: map[string]app.SeatIndex{
-			"seatIndex": nextSeatToPlay.Index,
-		},
-	})
-	h.broadcast(seatTurnMsg)
+	if nextSeatToPlay != nil {
+		seatTurnMsg := newServerMessage(ServerMessageArgs[any]{
+			Type: MATCH_SEAT_TURN,
+			Payload: map[string]app.SeatIndex{
+				"seatIndex": nextSeatToPlay.Index,
+			},
+		})
+		h.broadcast(seatTurnMsg)
+	}
 
 	h.lastActionIdempotencyKey = ""
 }
@@ -244,7 +250,11 @@ func (h *Hub) revealNextTableCard() {
 }
 
 func (h *Hub) showdown(hideOpponentsHands bool) {
-	winners := h.match.Showdown()
+	winners, err := h.match.Showdown()
+	if err != nil {
+		fmt.Printf("failed to get winners: %v", err)
+		return
+	}
 	winnersIds := make([]uuid.UUID, len(winners))
 	for i, w := range winners {
 		winnersIds[i] = w.Id
@@ -349,16 +359,11 @@ func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) erro
 	})
 	h.broadcast(potAmountMsg)
 
-	h.sendPlayersInfo(true)
-	h.assertMinQuorum()
-
-	return nil
-}
-
-func (h *Hub) assertMinQuorum() {
 	if h.match.HasMinQuorum() {
 		h.endTurn()
 	} else {
 		h.showdown(true)
 	}
+
+	return nil
 }

@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { IsFieldInvalidPipe } from '@pipes/is-field-invalid/is-field-invalid-pipe';
 import { UserService } from '@services/user/user';
 import { firstValueFrom, map } from 'rxjs';
+import { IS_VALID_NAME, MIN_NAME_LEN } from './consts';
 import type { LoginFormData } from './types/LoginFormData';
 
 @Component({
@@ -21,11 +22,11 @@ export class Login {
     this.model,
     ({ userName }) => {
       required(userName);
-      minLength(userName, 4, { message: 'Mínimo de 4 caracteres' });
+      minLength(userName, MIN_NAME_LEN, { message: `Mínimo de ${MIN_NAME_LEN} caracteres` });
       validate(userName, ({ value }) =>
-        !/^[a-z]+$/i.test(value())
-          ? { kind: 'alphabet-only', message: 'Apenas letras são permitidas' }
-          : undefined,
+        IS_VALID_NAME.test(value())
+          ? undefined
+          : { kind: 'invalid-chars', message: 'Caracteres especiais não são permitidos' },
       );
     },
     {

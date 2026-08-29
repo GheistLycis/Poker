@@ -1,0 +1,24 @@
+<div class="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-10 items-end">
+  <div class="relative w-50">
+    @for (stack of this.stacks(); track stack.variant + $index) {
+      <div
+        [ngStyle]="{
+          'z-index': stack.position === 'front' ? 1 : 0,
+          'right.px': $index * 25,
+          'bottom.px': stack.position === 'front' ? 0 : 20,
+        }"
+        class="absolute"
+      >
+        <img
+          [ngSrc]="'chips/' + stack.variant + '_chip_stack.png'"
+          [width]="100"
+          [height]="100"
+          alt="pot"
+          priority
+        />
+      </div>
+    }
+  </div>
+
+  <p>{{ amount() | currency }}</p>
+</div>

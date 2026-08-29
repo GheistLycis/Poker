@@ -1,8 +1,10 @@
 import { NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import type { Player } from '@app-types/Player';
 import type { SeatIndex } from '@app-types/SeatIndex';
 import { Opponent } from '@components/opponent/opponent';
+import { Pot } from '@components/pot/pot';
 import { Table } from '@components/table/table';
 import { User } from '@components/user/user';
 import { MatchService } from '@services/match/match';
@@ -10,7 +12,7 @@ import { UserService } from '@services/user/user';
 
 @Component({
   selector: 'app-game',
-  imports: [Opponent, User, Table, NgOptimizedImage],
+  imports: [Opponent, User, Table, NgOptimizedImage, Pot],
   templateUrl: './game.html',
 })
 export class Game {
@@ -48,4 +50,9 @@ export class Game {
         };
       });
   });
+
+  onPlayerWon(player: Player) {
+    // TODO
+    console.log(player);
+  }
 }

@@ -2,21 +2,19 @@
   <div class="flex w-full items-end justify-center gap-4">
     @if (isUserTurn$ | async) {
       @for (action of PLAYER_ACTIONS; track action) {
-        <button (click)="matchService.registerUserAction(action)" matButton>
+        <!-- TODO: BET action amount -->
+        <button (click)="sendAction(action)" matButton>
           {{ action | playerAction }}
         </button>
       }
     }
   </div>
 
-  <div class="flex items-end justify-between">
-    @if (userService.user(); as user) {
-      <p>{{ user.name }}</p>
+  <div class="flex items-end justify-center gap-4">
+    @if (user$ | async; as user) {
+      <!-- TODO: emote button -->
       <app-cards-hand [player]="user" [isUser]="true" />
-      <div>
-        <p>Score:</p>
-        <p>{{ user.score | currency }}</p>
-      </div>
+      <p>{{ user.score | currency }}</p>
     }
   </div>
 </div>
