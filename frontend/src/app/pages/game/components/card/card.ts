@@ -6,6 +6,7 @@ import type { CardOwner } from '@app-types/CardOwner';
 import { CardOwnerEnum } from '@app-types/CardOwner';
 import { BIGGER_CARD_PROPORTION, CARD_HEIGHT_PX, CARD_WIDTH_PX } from './consts';
 
+// TODO: implement sound effects
 @Component({
   selector: 'app-card',
   imports: [NgOptimizedImage, NgClass, NgStyle],
