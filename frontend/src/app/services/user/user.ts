@@ -22,6 +22,18 @@ export class UserService {
   user = toSignal(this.user$);
   isLoggedIn = computed(() => !!this.user());
 
+  constructor() {
+    effect(() => {
+      const storedUserName = sessionStorage.getItem(USER_STORAGE_KEY);
+
+      if (storedUserName && !this.matchService.isLoading()) {
+        this.logIn({ userName: storedUserName })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe();
+      }
+    });
+  }
+
   logIn(payload: LoginPayload) {
     this.apiService.send({ type: 'user.login', payload });
 
@@ -30,18 +42,5 @@ export class UserService {
       tap(() => this.router.navigate([''])),
       take(1),
     );
-  }
-
-  constructor() {
-    effect(() => {
-      if (this.matchService.isLoading()) return;
-
-      const storedUserName = sessionStorage.getItem(USER_STORAGE_KEY);
-
-      if (storedUserName)
-        this.logIn({ userName: storedUserName })
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe();
-    });
   }
 }

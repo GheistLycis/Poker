@@ -1,20 +1,66 @@
-# Objetivo
+# How to run
 
-Criar uma mesa de Poker Texas Hold'em.
+## Backend
 
-Ao iniciar o servidor, a mesa é criada e todo estado da partida é persistido em memória até que o servidor seja encerrado. Ao iniciar novamente, nenhum estado anterior é salvo, mas uma partida totalmente nova é criada.
+### Prerequisites
 
-Sempre que um jogador entra na mesa, ele começa com um número fixo de dinheiro. Sempre que ele sai, todo dinheiro ganho/perdido é limpado da memória. Não existe criação de conta para salvar progresso.
+- Go ^1.25.9
 
-Todos jogadores devem estar no mesmo wi-fi local do servidor.
+### Install dependencies
+
+```sh
+cd backend
+make i
+```
+
+### Run app
+
+```sh
+cd backend
+make run
+```
+
+### Testing
+
+```sh
+cd backend
+make test
+```
+
+## Frontend
+
+### Prerequisites
+
+- NodeJS ^22.22.3 || ^24.15.0 || ^26.0.0
+
+### Install dependencies
+
+```sh
+cd frontend
+npm i
+```
+
+### Run app
+
+```sh
+cd frontend
+npm run start
+```
+
+### Check Angular (TS+HTML) errors
+
+```sh
+cd frontend
+npm run ngc
+```
 
 # TO-DO
 
 ## Frontend
 
-- [ ] trocar Material por Spartan
+- [ ] Switch from Material to Spartan
 
 ## Backend
 
-- [ ] criação de conta e persistência de dados
-- [ ] permitir jogadores de fora da LAN
+- [ ] Account creation and data persistence
+- [ ] Allow players from outside the LAN

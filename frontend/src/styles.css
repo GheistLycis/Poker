@@ -16,4 +16,9 @@
   ::selection {
     @apply text-primary bg-black/80;
   }
+
+  #background {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
 }
