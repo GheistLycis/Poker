@@ -1,16 +1,21 @@
 <div class="flex min-h-svh w-full items-center justify-center">
   <form [formRoot]="form">
     <div>
-      <mat-form-field>
-        <mat-label>Nome de usuário</mat-label>
-        <input [formField]="form.userName" matInput placeholder="Insira seu nome de usuário" />
+      <hlm-field>
+        <label hlmFieldLabel for="userName">Nome de usuário</label>
+        <input
+          [formField]="form.userName"
+          id="userName"
+          hlmInput
+          placeholder="Insira seu nome de usuário"
+        />
         @if (form.userName() | isFieldInvalid) {
-          <mat-error>{{ form.userName().errors()[0].message }}</mat-error>
+          <hlm-field-description>{{ form.userName().errors()[0].message }}</hlm-field-description>
         }
-      </mat-form-field>
+      </hlm-field>
     </div>
 
-    <button [disabled]="form().invalid() || form().submitting()" type="submit" matButton>
+    <button [disabled]="form().invalid() || form().submitting()" type="submit" hlmBtn>
       @if (form().submitting()) {
         Entrando...
       } @else {

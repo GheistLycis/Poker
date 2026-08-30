@@ -1,14 +1,16 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSliderModule } from '@angular/material/slider';
 import { CARD_SFX } from '@components/card/consts';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { heroSpeakerWave, heroSpeakerXMark } from '@ng-icons/heroicons/outline';
 import { AudioService } from '@services/audio/audio';
+import { HlmSliderImports } from '@ui/slider';
 
 @Component({
   selector: 'app-audio-hud',
-  imports: [MatIconModule, MatSliderModule, NgClass],
+  imports: [NgIcon, NgClass, HlmSliderImports],
   templateUrl: './audio-hud.html',
+  providers: [provideIcons({ heroSpeakerWave, heroSpeakerXMark })],
   host: { '(document:click)': 'hasInteractedWithDom.set(true)' },
 })
 export class AudioHud {

@@ -1,17 +1,18 @@
 <div class="group absolute top-2 right-2 flex items-center gap-2">
-  <mat-slider
+  <hlm-slider
+    (valueChange)="changeVolume($event[0])"
+    [value]="[volume()]"
+    [min]="0"
+    [max]="1"
+    [step]="0.01"
     [ngClass]="audioIsEnabled() ? 'group-hover:opacity-100' : 'group-hover:opacity-50'"
-    min="0"
-    max="1"
-    step="0.1"
-    class="opacity-0 duration-400 ease-out"
-  >
-    <input (valueChange)="changeVolume($event)" [value]="volume()" matSliderThumb size="sm" />
-  </mat-slider>
+    class="min-w-40 opacity-0 duration-400 ease-out"
+  />
 
-  <mat-icon
+  <ng-icon
     (click)="toggleAudio()"
-    [fontIcon]="audioIsEnabled() ? 'music_note' : 'music_off'"
-    class="cursor-pointer duration-200 ease-out hover:opacity-80"
+    [name]="audioIsEnabled() ? 'heroSpeakerWave' : 'heroSpeakerXMark'"
+    class="cursor-pointer pr-10 text-white! duration-200 ease-out hover:opacity-80"
+    size="36px"
   />
 </div>

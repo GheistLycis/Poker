@@ -3,7 +3,7 @@
     @if (isUserTurn$ | async) {
       @for (action of PLAYER_ACTIONS; track action) {
         <!-- TODO: BET action amount -->
-        <button (click)="sendAction(action)" matButton>
+        <button (click)="sendAction(action)" hlmBtn>
           {{ action | playerAction }}
         </button>
       }

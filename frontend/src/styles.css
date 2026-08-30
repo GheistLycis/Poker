@@ -1,13 +1,20 @@
 @import './styles/fonts.css';
-@import '@angular/material/prebuilt-themes/magenta-violet.css';
+
+@layer theme, base, components, utilities;
 @import 'tailwindcss';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+
 @import './styles/animations.css';
 @import './styles/palette.css';
+@import './styles/button.css';
 
 @layer base {
   body {
     font-family: 'Lato', sans-serif;
-    color: white;
     caret-color: var(--color-secondary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

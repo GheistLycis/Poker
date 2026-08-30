@@ -58,7 +58,7 @@ npm run ngc
 
 ## Frontend
 
-- [ ] Switch from Material to Spartan
+- [x] Switch from Material to Spartan
 
 ## Backend
 
