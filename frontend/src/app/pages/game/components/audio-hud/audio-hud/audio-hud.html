@@ -1,0 +1,17 @@
+<div class="group absolute top-2 right-2 flex items-center gap-2">
+  <mat-slider
+    [ngClass]="audioIsEnabled() ? 'group-hover:opacity-100' : 'group-hover:opacity-50'"
+    min="0"
+    max="1"
+    step="0.1"
+    class="opacity-0 duration-400 ease-out"
+  >
+    <input (valueChange)="changeVolume($event)" [value]="volume()" matSliderThumb size="sm" />
+  </mat-slider>
+
+  <mat-icon
+    (click)="toggleAudio()"
+    [fontIcon]="audioIsEnabled() ? 'music_note' : 'music_off'"
+    class="cursor-pointer duration-200 ease-out hover:opacity-80"
+  />
+</div>

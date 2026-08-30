@@ -3,6 +3,7 @@ import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import type { Player } from '@app-types/Player';
 import type { SeatIndex } from '@app-types/SeatIndex';
+import { AudioHud } from '@components/audio-hud/audio-hud/audio-hud';
 import { Opponent } from '@components/opponent/opponent';
 import { Pot } from '@components/pot/pot';
 import { Table } from '@components/table/table';
@@ -12,7 +13,7 @@ import { UserService } from '@services/user/user';
 
 @Component({
   selector: 'app-game',
-  imports: [Opponent, User, Table, NgOptimizedImage, Pot],
+  imports: [Opponent, User, Table, NgOptimizedImage, Pot, AudioHud],
   templateUrl: './game.html',
 })
 export class Game {

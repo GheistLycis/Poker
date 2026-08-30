@@ -1,5 +1,7 @@
 <div class="relative h-svh overflow-hidden">
-  <img ngSrc="background.jpg" alt="background" fill priority />
+  <img id="background" ngSrc="background.jpg" alt="background" fill priority />
+
+  <app-audio-hud />
 
   @for (opponentSeat of this.opponentsSeats(); track opponentSeat.seat) {
     <div
