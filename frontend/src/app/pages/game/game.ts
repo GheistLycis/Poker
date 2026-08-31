@@ -15,6 +15,7 @@ import { UserService } from '@services/user/user';
   selector: 'app-game',
   imports: [Opponent, User, Table, NgOptimizedImage, Pot, AudioHud],
   templateUrl: './game.html',
+  styleUrl: './game.css',
 })
 export class Game {
   private matchService = inject(MatchService);

@@ -37,10 +37,10 @@ import { classes } from '@ui/utils';
     >
       <div
         brnSliderTrack
-        class="bg-muted relative grow overflow-hidden rounded-full data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
+        class="bg-muted-foreground relative grow overflow-hidden rounded-full data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
       >
         <div
-          class="bg-primary absolute select-none data-draggable-range:cursor-move data-horizontal:h-full data-vertical:w-full"
+          class="bg-primary-foreground absolute select-none data-draggable-range:cursor-move data-horizontal:h-full data-vertical:w-full"
           brnSliderRange
         ></div>
       </div>

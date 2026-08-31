@@ -1,9 +1,14 @@
 <div class="absolute bottom-4 w-full px-[25%] text-lg font-semibold">
-  <div class="flex w-full items-end justify-center gap-4">
+  <div class="mb-2 flex w-full items-end justify-center gap-4">
     @if (isUserTurn$ | async) {
       @for (action of PLAYER_ACTIONS; track action) {
         <!-- TODO: BET action amount -->
-        <button (click)="sendAction(action)" hlmBtn>
+        <button
+          (click)="sendAction(action)"
+          [variant]="action === PLAYER_ACTION_ENUM.FOLD ? 'destructive' : 'ghost'"
+          hlmBtn
+          class="font-semibold"
+        >
           {{ action | playerAction }}
         </button>
       }

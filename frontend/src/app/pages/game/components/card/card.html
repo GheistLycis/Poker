@@ -7,7 +7,7 @@
     [ngClass]="{
       'duration-300 ease-out hover:-translate-y-2 hover:opacity-90': !isCardBack(),
     }"
-    [class]="class()"
+    [class]="'shadow-xl shadow-black/40 ' + class()"
     priority
   />
 } @else {

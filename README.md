@@ -62,5 +62,5 @@ npm run ngc
 
 ## Backend
 
-- [ ] Account creation and data persistence
+- [ ] Hub span when current hubs are full
 - [ ] Allow players from outside the LAN

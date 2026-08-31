@@ -1,19 +1,18 @@
 <div class="flex min-h-svh w-full items-center justify-center">
-  <form [formRoot]="form">
-    <div>
-      <hlm-field>
-        <label hlmFieldLabel for="userName">Nome de usuário</label>
-        <input
-          [formField]="form.userName"
-          id="userName"
-          hlmInput
-          placeholder="Insira seu nome de usuário"
-        />
-        @if (form.userName() | isFieldInvalid) {
-          <hlm-field-description>{{ form.userName().errors()[0].message }}</hlm-field-description>
-        }
-      </hlm-field>
-    </div>
+  <form [formRoot]="form" class="flex flex-col gap-2">
+    <hlm-field>
+      <label hlmFieldLabel for="userName">Nome de usuário</label>
+      <input
+        [formField]="form.userName"
+        id="userName"
+        hlmInput
+        placeholder="Insira seu nome de usuário"
+        class="text-primary"
+      />
+      @if (form.userName() | isFieldInvalid) {
+        <hlm-field-description>{{ form.userName().errors()[0].message }}</hlm-field-description>
+      }
+    </hlm-field>
 
     <button [disabled]="form().invalid() || form().submitting()" type="submit" hlmBtn>
       @if (form().submitting()) {

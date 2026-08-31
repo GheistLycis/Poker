@@ -16,6 +16,7 @@ import { CardsHand } from '../cards-hand/cards-hand';
   templateUrl: './user.html',
 })
 export class User {
+  PLAYER_ACTION_ENUM = PlayerActionEnum;
   PLAYER_ACTIONS = Object.values(PlayerActionEnum);
 
   private userService = inject(UserService);

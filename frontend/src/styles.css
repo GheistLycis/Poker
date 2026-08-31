@@ -1,31 +1,30 @@
 @import './styles/fonts.css';
 
 @layer theme, base, components, utilities;
-@import 'tailwindcss';
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/preflight.css' layer(base);
-@import 'tailwindcss/utilities.css';
 
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
-@import './styles/animations.css';
-@import './styles/palette.css';
-@import './styles/button.css';
+@import './styles/palette.css' layer(theme);
+@import './styles/animations.css' layer(utilities);
 
 @layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
   body {
     font-family: 'Lato', sans-serif;
-    caret-color: var(--color-secondary);
+    caret-color: var(--color-primary-foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    @apply bg-background text-primary-foreground;
   }
 
   ::selection {
-    @apply text-primary bg-black/80;
-  }
-
-  #background {
-    -webkit-user-drag: none;
-    user-drag: none;
+    @apply bg-black/80;
   }
 }
