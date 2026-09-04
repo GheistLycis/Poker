@@ -1,11 +1,13 @@
+@let betValue = bet()[0];
+
 <div class="absolute bottom-4 w-full px-[25%] text-lg font-semibold">
   <div class="mb-2 flex w-full items-end justify-center gap-4">
-    @if (isUserTurn$ | async) {
+    @if (isUserTurn()) {
       @for (action of PLAYER_ACTIONS; track action) {
-        <!-- TODO: BET action amount -->
         <button
           (click)="sendAction(action)"
           [variant]="action === PLAYER_ACTION_ENUM.FOLD ? 'destructive' : 'ghost'"
+          [disabled]="action === PLAYER_ACTION_ENUM.BET && !betValue"
           hlmBtn
           class="font-semibold"
         >
@@ -15,10 +17,54 @@
     }
   </div>
 
+  <!-- TODO: emote button -->
   <div class="flex items-end justify-center gap-4">
-    @if (user$ | async; as user) {
-      <!-- TODO: emote button -->
+    @if (user(); as user) {
+      @if (isUserTurn()) {
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-col items-end gap-0">
+            @for (amount of [50, 100, 500]; track amount) {
+              <div class="flex items-center gap-1 text-xs">
+                <button
+                  (click)="incrementBet(amount, '-')"
+                  class="p-2 duration-200 hover:bg-transparent"
+                  hlmBtn
+                  variant="ghost"
+                >
+                  -
+                </button>
+                {{ amount | currency }}
+                <button
+                  (click)="incrementBet(amount, '+')"
+                  class="p-2 duration-200 hover:bg-transparent"
+                  hlmBtn
+                  variant="ghost"
+                >
+                  +
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="flex h-4 items-center justify-between">
+            <label hlmLabel for="bet">Apostar</label>
+            <p class="text-sm">{{ betValue ? (betValue | currency) : '' }}</p>
+          </div>
+
+          <hlm-slider
+            [min]="0"
+            [max]="user.score"
+            [step]="0.01"
+            [(value)]="bet"
+            id="bet"
+            class="w-40"
+            hlmLabel
+          />
+        </div>
+      }
+
       <app-cards-hand [player]="user" [isUser]="true" />
+
       <p>{{ user.score | currency }}</p>
     }
   </div>
