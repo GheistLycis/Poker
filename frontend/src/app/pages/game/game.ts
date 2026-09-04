@@ -1,7 +1,6 @@
 import { NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import type { Player } from '@app-types/Player';
 import type { SeatIndex } from '@app-types/SeatIndex';
 import { AudioHud } from '@components/audio-hud/audio-hud';
 import { Opponent } from '@components/opponent/opponent';
@@ -47,14 +46,9 @@ export class Game {
 
         return {
           seat,
-          left: `${50 + 40 * Math.cos(rad)}%`,
-          top: `${50 - 40 * Math.sin(rad)}%`,
+          left: 50 + 40 * Math.cos(rad) + '%',
+          top: 50 - 40 * Math.sin(rad) + '%',
         };
       });
   });
-
-  onPlayerWon(player: Player) {
-    // TODO
-    console.log(player);
-  }
 }

@@ -27,7 +27,7 @@ export class MatchService {
   tableCards$ = this.apiService
     .getMessages('match.table-cards')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
-  roundWInners$ = this.apiService
+  roundWinners$ = this.apiService
     .getMessages('match.winners')
     .pipe(shareReplay({ bufferSize: 1, refCount: false }));
   pot$ = this.apiService.getMessages('match.pot-amount').pipe(
@@ -53,9 +53,9 @@ export class MatchService {
   }
 
   playerWon(playerId: Player['id']) {
-    return this.roundWInners$.pipe(
-      filter((winnersIds) => winnersIds.includes(playerId)),
-      map(() => {}),
+    return this.roundWinners$.pipe(
+      map((winners) => winners.find(({ id }) => id === playerId)),
+      filter((winner) => !!winner),
     );
   }
 

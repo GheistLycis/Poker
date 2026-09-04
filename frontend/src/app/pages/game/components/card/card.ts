@@ -19,6 +19,7 @@ export class Card {
   variant = input.required<CardType | null>();
   owner = input.required<CardOwner>();
   class = input('');
+  highlight = input(false);
 
   imgFileType = computed(() => (this.variant() === CardEnum.BACK ? '.png' : '.svg'));
   size = computed(() => {

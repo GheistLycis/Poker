@@ -8,6 +8,7 @@
         [owner]="isUser() ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
         [animate.enter]="isCardReveal ? 'fade-in' : 'drop-in'"
         [animate.leave]="isCardReveal ? 'fade-out' : undefined"
+        [highlight]="!!card && highlight().includes(card)"
       />
     }
   }

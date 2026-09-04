@@ -19,6 +19,7 @@ export class CardsHand {
 
   player = input.required<Player>();
   isUser = input.required<boolean>();
+  highlight = input<CardType[]>([]);
 
   cards$ = toObservable(this.player).pipe(
     map(({ cards }) => cards),

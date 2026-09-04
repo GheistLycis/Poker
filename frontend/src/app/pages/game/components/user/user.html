@@ -11,7 +11,7 @@
           hlmBtn
           class="font-semibold"
         >
-          {{ action | playerAction }}
+          {{ action | playerAction | uppercase }}
         </button>
       }
     }
@@ -20,8 +20,8 @@
   <!-- TODO: emote button -->
   <div class="flex items-end justify-center gap-4">
     @if (user(); as user) {
-      @if (isUserTurn()) {
-        <div class="flex flex-col gap-2">
+      <div class="flex w-[150px] flex-col gap-2">
+        @if (isUserTurn()) {
           <div class="flex flex-col items-end gap-0">
             @for (amount of [50, 100, 500]; track amount) {
               <div class="flex items-center gap-1 text-xs">
@@ -47,7 +47,7 @@
           </div>
 
           <div class="flex h-4 items-center justify-between">
-            <label hlmLabel for="bet">Apostar</label>
+            <label hlmLabel for="bet">APOSTAR</label>
             <p class="text-sm">{{ betValue ? (betValue | currency) : '' }}</p>
           </div>
 
@@ -58,14 +58,31 @@
             [(value)]="bet"
             id="bet"
             class="w-40"
-            hlmLabel
+          />
+        }
+      </div>
+
+      <div class="flex gap-2">
+        <div class="w-[250px]">
+          <app-cards-hand
+            [player]="user"
+            [isUser]="true"
+            [highlight]="userWon()?.winningHandCards ?? []"
           />
         </div>
-      }
 
-      <app-cards-hand [player]="user" [isUser]="true" />
+        <div class="flex min-h-full w-[150px] flex-col justify-between">
+          <div>
+            @if (userWon(); as userWon) {
+              <span animate.enter="pop-up" animate.leave="fade-out" class="text-xl italic">
+                {{ userWon.winningHand | hand | uppercase }}!
+              </span>
+            }
+          </div>
 
-      <p>{{ user.score | currency }}</p>
+          <p>{{ user.score | currency }}</p>
+        </div>
+      </div>
     }
   </div>
 </div>
