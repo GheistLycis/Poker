@@ -15,6 +15,7 @@
     "paths": {
       "@app-types/*": ["./src/app/types/*"],
       "@components/*": ["./src/app/pages/game/components/*"],
+      "@directives/*": ["./src/app/directives/*"],
       "@env": ["./src/environments/environment"],
       "@guards/*": ["./src/app/guards/*"],
       "@pipes/*": ["./src/app/pipes/*"],

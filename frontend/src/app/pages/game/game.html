@@ -9,7 +9,7 @@
       [style.top]="opponentSeat.top"
       class="absolute w-max -translate-1/2"
     >
-      <app-opponent (opponentWon)="onPlayerWon($event)" [seat]="opponentSeat.seat" />
+      <app-opponent [seat]="opponentSeat.seat" />
     </div>
   }
 
@@ -17,5 +17,5 @@
 
   <app-pot />
 
-  <app-user (userWon)="onPlayerWon($event)" />
+  <app-user />
 </div>
