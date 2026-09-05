@@ -6,6 +6,7 @@
     [height]="size().height"
     [ngClass]="{
       'duration-300 ease-out hover:-translate-y-2 hover:opacity-90': !isCardBack(),
+      'scale-105 shadow-yellow-300/60': highlight(),
     }"
     [class]="'shadow-xl shadow-black/40 ' + class()"
     priority

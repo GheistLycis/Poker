@@ -12,10 +12,10 @@
   }
 }
 
-.fade-in {
-  animation: fade-in 0.2s ease-out;
+.slide-in {
+  animation: slide-in 0.2s ease-out;
 }
-@keyframes fade-in {
+@keyframes slide-in {
   from {
     opacity: 0;
     transform: translateX(10px);
@@ -26,18 +26,28 @@
   }
 }
 
-.fade-out {
-  animation: fade-out 0.2s ease-out;
+.slide-out {
+  animation: slide-out 0.2s ease-out;
 }
-@keyframes fade-out {
+@keyframes slide-out {
   from {
-    display: none;
     opacity: 1;
     transform: translateX(0);
   }
   to {
-    display: none;
     opacity: 0;
     transform: translateX(10px);
+  }
+}
+
+.hide {
+  animation: hide-frame 0.2s ease-out;
+}
+@keyframes hide-frame {
+  from {
+    display: none;
+  }
+  to {
+    display: none;
   }
 }
