@@ -1,4 +1,5 @@
 @let betValue = bet()[0];
+@let userWon = userWon$ | async;
 
 <div class="absolute bottom-4 w-full px-[25%] text-lg font-semibold">
   <div class="mb-2 flex w-full items-end justify-center gap-4">
@@ -18,9 +19,9 @@
   </div>
 
   <!-- TODO: emote button -->
-  <div class="flex items-end justify-center gap-4">
+  <div class="gap- flex items-end justify-center">
     @if (user(); as user) {
-      <div class="flex w-[150px] flex-col gap-2">
+      <div class="flex min-w-[170px] flex-col gap-2">
         @if (isUserTurn()) {
           <div class="flex flex-col items-end gap-0">
             @for (amount of [50, 100, 500]; track amount) {
@@ -67,16 +68,16 @@
           <app-cards-hand
             [player]="user"
             [isUser]="true"
-            [highlight]="userWon()?.winningHandCards ?? []"
+            [highlight]="userWon?.winningCards ?? []"
           />
         </div>
 
         <div class="flex min-h-full w-[150px] flex-col justify-between">
           <div>
-            @if (userWon(); as userWon) {
-              <span animate.enter="pop-up" animate.leave="fade-out" class="text-xl italic">
+            @if (userWon) {
+              <p animate.enter="slide-in" animate.leave="slide-out" class="text-xl italic">
                 {{ userWon.winningHand | hand | uppercase }}!
-              </span>
+              </p>
             }
           </div>
 

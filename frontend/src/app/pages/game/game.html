@@ -1,3 +1,5 @@
+@let winners = roundWinners();
+
 <div class="relative h-svh overflow-hidden">
   <img id="background" ngSrc="background.jpg" alt="background" fill priority />
 
@@ -9,13 +11,13 @@
       [style.top]="opponentSeat.top"
       class="absolute w-max -translate-1/2"
     >
-      <app-opponent [seat]="opponentSeat.seat" />
+      <app-opponent [seat]="opponentSeat.seat" [roundWinners]="winners" />
     </div>
   }
 
-  <app-table />
+  <app-table [roundWinners]="winners" />
 
   <app-pot />
 
-  <app-user />
+  <app-user [roundWinners]="winners" />
 </div>

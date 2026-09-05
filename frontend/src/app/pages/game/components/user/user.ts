@@ -1,22 +1,19 @@
-import { CurrencyPipe, UpperCasePipe } from '@angular/common';
-import { Component, inject, model } from '@angular/core';
+import { AsyncPipe, CurrencyPipe, UpperCasePipe } from '@angular/common';
+import { Component, inject, input, model } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import type { Card } from '@app-types/Card';
-import { CardEnum } from '@app-types/Card';
-import { HandEnum, type Hand } from '@app-types/Hand';
 import type { PlayerAction } from '@app-types/PlayerAction';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
-import { faker } from '@faker-js/faker';
 import { HandPipe } from '@pipes/hand/hand-pipe';
+import type { ReceiveWinners } from '@services/api/types/messages/in/ReceiveWinners';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
 import { HlmButtonImports } from '@ui/button';
 import { HlmLabel } from '@ui/label';
 import { HlmSliderImports } from '@ui/slider';
-import { concat, filter, map, of, Subject, switchMap, tap, timer } from 'rxjs';
+import { combineLatest, concat, filter, map, of, switchMap, timer } from 'rxjs';
 import { PlayerActionPipe } from '../../../../pipes/player-action/player-action-pipe';
+import { WINNING_FX_DUR_SEC } from '../../consts';
 import { CardsHand } from '../cards-hand/cards-hand';
-import { USER_WON_POPUP_DURATION_SEC } from './consts';
 
 @Component({
   selector: 'app-user',
@@ -29,9 +26,9 @@ import { USER_WON_POPUP_DURATION_SEC } from './consts';
     HlmLabel,
     HandPipe,
     UpperCasePipe,
+    AsyncPipe,
   ],
   templateUrl: './user.html',
-  styleUrl: './user.css',
 })
 export class User {
   PLAYER_ACTION_ENUM = PlayerActionEnum;
@@ -40,36 +37,22 @@ export class User {
   private userService = inject(UserService);
   private matchService = inject(MatchService);
 
+  roundWinners = input<ReceiveWinners['payload']>();
+
   user = this.userService.user;
   private user$ = toObservable(this.userService.user).pipe(filter((user) => !!user));
   isUserTurn = toSignal(
     this.user$.pipe(switchMap((user) => this.matchService.isPlayerTurn(user.seatIndex))),
   );
-  // private userWon$ = this.user$.pipe(switchMap((user) => this.matchService.playerWon(user.id)));
-  private userWon$ = new Subject<{ winningHand: Hand; winningCards: Card[] }>();
-  userWon = toSignal(
-    this.userWon$.pipe(
-      switchMap((userWon) =>
-        concat(of(userWon), timer(USER_WON_POPUP_DURATION_SEC * 1000).pipe(map(() => undefined))),
-      ),
+  private roundWinners$ = toObservable(this.roundWinners);
+  userWon$ = combineLatest([this.roundWinners$, this.user$]).pipe(
+    map(([winners, user]) => winners?.find(({ id }) => id === user.id)),
+    filter((winningUser) => !!winningUser),
+    switchMap((winningUser) =>
+      concat(of(winningUser), timer(WINNING_FX_DUR_SEC * 1000).pipe(map(() => undefined))),
     ),
-    { initialValue: undefined },
   );
-
   bet = model<[number]>([0]);
-
-  constructor() {
-    timer(2_000, 7_000)
-      .pipe(
-        tap(() =>
-          this.userWon$.next({
-            winningHand: faker.helpers.enumValue(HandEnum),
-            winningCards: faker.helpers.arrayElements(Object.values(CardEnum)),
-          }),
-        ),
-      )
-      .subscribe();
-  }
 
   incrementBet(amount: number, operation: '-' | '+') {
     let final = this.bet()[0];

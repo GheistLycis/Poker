@@ -1,10 +1,13 @@
+@let winningCards = this.winningCards$ | async;
+
 <ng-template #tableCard let-variant="variant" let-cardClass="class" let-animated="animated">
   <app-card
     [variant]="variant"
     [owner]="CARD_OWNER_ENUM.TABLE"
     [class]="cardClass"
-    [animate.enter]="animated ? 'fade-in' : ''"
-    [animate.leave]="animated ? 'fade-out' : ''"
+    [animate.enter]="animated ? 'slide-in' : ''"
+    [animate.leave]="animated ? 'hide' : ''"
+    [highlight]="winningCards?.includes(variant) ?? false"
   />
 </ng-template>
 

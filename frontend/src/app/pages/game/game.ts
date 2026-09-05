@@ -51,4 +51,5 @@ export class Game {
         };
       });
   });
+  roundWinners = toSignal(this.matchService.roundWinners$);
 }

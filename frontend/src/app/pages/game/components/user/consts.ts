@@ -1,1 +1,0 @@
-export const USER_WON_POPUP_DURATION_SEC = 5;

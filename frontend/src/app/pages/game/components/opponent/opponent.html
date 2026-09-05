@@ -1,12 +1,30 @@
+@let opponentWon = opponentWon$ | async;
+
 <div class="flex flex-col items-start">
   @if (opponent$ | async; as opponent) {
+    <div class="min-h-7">
+      @if (opponentWon) {
+        <p animate.enter="slide-in" animate.leave="slide-out" class="text-xl italic">
+          {{ opponentWon.winningHand | hand | uppercase }}!
+        </p>
+      }
+    </div>
+
     <p
       [ngClass]="{ 'text-red-700': isOpponentTurn$ | async }"
       class="max-w-[13ch] truncate font-semibold duration-200 ease-out"
     >
       {{ opponent.name }}
     </p>
-    <app-cards-hand [player]="opponent" [isUser]="false" />
+
+    <div class="flex items-end gap-2">
+      <app-cards-hand
+        [player]="opponent"
+        [isUser]="false"
+        [highlight]="opponentWon?.winningCards ?? []"
+      />
+    </div>
+
     <p>{{ opponent.score | currency }}</p>
   } @else {
     <div class="h-12 w-18 rounded-full bg-black/25"></div>
