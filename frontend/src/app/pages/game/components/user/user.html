@@ -48,7 +48,9 @@
           </div>
 
           <div class="flex h-4 items-center justify-between">
-            <label hlmLabel for="bet">APOSTAR</label>
+            <label hlmLabel for="bet">
+              {{ PLAYER_ACTION_ENUM.BET | playerAction | uppercase }}</label
+            >
             <p class="text-sm">{{ betValue ? (betValue | currency) : '' }}</p>
           </div>
 
