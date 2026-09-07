@@ -269,31 +269,31 @@ func (m *Match) calculateHand(h [2]Card) (Hand, []Card) {
 	cards := [7]Card(slices.Concat(h[:], m.TableCards[:]))
 
 	if has, hand := hasRoyalFlush(cards); has {
-		return ROYAL_FLUSH, hand
+		return ROYAL_FLUSH, hand[:]
 	}
 	if has, hand := hasStraightFlush(cards); has {
-		return STRAIGHT_FLUSH, hand
+		return STRAIGHT_FLUSH, hand[:]
 	}
 	if has, hand := hasFourOfAKind(cards); has {
-		return FOUR_OF_A_KIND, hand
+		return FOUR_OF_A_KIND, hand[:]
 	}
 	if has, hand := hasFullHouse(cards); has {
-		return FULL_HOUSE, hand
+		return FULL_HOUSE, hand[:]
 	}
 	if has, hand := hasFlush(cards); has {
-		return FLUSH, hand
+		return FLUSH, hand[:]
 	}
 	if has, hand := hasStraight(cards); has {
-		return STRAIGHT, hand
+		return STRAIGHT, hand[:]
 	}
 	if has, hand := hasThreeOfAKind(cards); has {
-		return THREE_OF_A_KIND, hand
+		return THREE_OF_A_KIND, hand[:]
 	}
 	if has, hand := hasTwoPairs(cards); has {
-		return TWO_PAIRS, hand
+		return TWO_PAIRS, hand[:]
 	}
 	if has, hand := hasOnePair(cards); has {
-		return ONE_PAIR, hand
+		return ONE_PAIR, hand[:]
 	}
 	return HIGH_CARD, []Card{getHighest(cards[:])}
 }

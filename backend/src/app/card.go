@@ -233,25 +233,17 @@ func getHighest(cards []Card) Card {
 	return highest
 }
 
-func getHighestWithSamePower(list [][]Card) []Card {
-	highest := list[0]
-	if len(list) > 1 {
-		for _, cardsWithSamePower := range list[1:] {
-			if getPower(cardsWithSamePower[0]) > getPower(highest[0]) {
-				highest = cardsWithSamePower
-			}
-		}
-	}
-
-	return highest
-}
-
-func sortByPower(cards []Card) []Card {
+func sortByPower(cards []Card, asc bool) []Card {
 	sorted := make([]Card, len(cards))
 	copy(sorted, cards)
 
 	slices.SortFunc(sorted, func(a, b Card) int {
-		return getPower(a) - getPower(b)
+		diff := getPower(a) - getPower(b)
+		if asc {
+			return diff
+		} else {
+			return -diff
+		}
 	})
 
 	return sorted
@@ -277,6 +269,7 @@ func mapBySuit(h []Card) map[Suit][]Card {
 	return result
 }
 
+// Returns slices of cards grouped by power, if the length of the group >= n
 func hasNOfAKind(h []Card, n int) (bool, [][]Card) {
 	result := [][]Card{}
 	for _, c := range mapByPower(h) {
@@ -286,4 +279,22 @@ func hasNOfAKind(h []Card, n int) (bool, [][]Card) {
 	}
 
 	return len(result) > 0, result
+}
+
+/*
+Expects list to be cards grouped by power (see hasNOfAKind).
+
+Returns the group with highest power.
+*/
+func getHighestOfAKind(list [][]Card) []Card {
+	highest := list[0]
+	if len(list) > 1 {
+		for _, cardsWithSamePower := range list[1:] {
+			if getPower(cardsWithSamePower[0]) > getPower(highest[0]) {
+				highest = cardsWithSamePower
+			}
+		}
+	}
+
+	return highest
 }
