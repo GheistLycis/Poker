@@ -249,19 +249,29 @@ func (h *Hub) revealNextTableCard() {
 	h.broadcast(tableCardsMsg)
 }
 
+type roundWinner struct {
+	Id           uuid.UUID  `json:"id"`
+	WinningHand  app.Hand   `json:"winningHand"`
+	WinningCards []app.Card `json:"winningCards"`
+}
+
 func (h *Hub) showdown(hideOpponentsHands bool) {
 	winners, err := h.match.Showdown()
 	if err != nil {
 		fmt.Printf("failed to get winners: %v", err)
 		return
 	}
-	winnersIds := make([]uuid.UUID, len(winners))
-	for i, w := range winners {
-		winnersIds[i] = w.Id
+	roundWinners := []roundWinner{}
+	for _, w := range winners {
+		roundWinners = append(roundWinners, roundWinner{
+			Id:           w.Player.Id,
+			WinningHand:  w.WinningHand,
+			WinningCards: w.WinningCards,
+		})
 	}
 	winnersMsg := newServerMessage(ServerMessageArgs[any]{
 		Type:    MATCH_WINNERS,
-		Payload: winnersIds,
+		Payload: roundWinners,
 	})
 
 	h.broadcast(winnersMsg)
