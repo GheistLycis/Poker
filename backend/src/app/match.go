@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"slices"
 )
@@ -210,19 +211,25 @@ func (m *Match) DoPotTransaction(v int, p *Player) error {
 }
 
 type playerHand struct {
-	hand        Hand
-	highestCard Card
+	hand      Hand
+	handCards []Card
 }
 
-func (m *Match) Showdown() ([]*Player, error) {
-	winners := []*Player{}
+type roundWinner struct {
+	Player       *Player
+	WinningHand  Hand
+	WinningCards []Card
+}
+
+func (m *Match) Showdown() ([]roundWinner, error) {
+	winners := []roundWinner{}
 
 	handMap := map[*Player]playerHand{}
 	for _, s := range m.RoundSeats {
 		if s != nil {
 			player := s.Player
-			hand, highestCard := m.calculateHand(player.Cards)
-			handMap[player] = playerHand{hand: hand, highestCard: highestCard}
+			hand, handCards := m.calculateHand(player.Cards)
+			handMap[player] = playerHand{hand: hand, handCards: handCards}
 		}
 	}
 
@@ -235,7 +242,11 @@ func (m *Match) Showdown() ([]*Player, error) {
 
 	for p, h := range handMap {
 		if h.hand == highestHand {
-			winners = append(winners, p)
+			winners = append(winners, roundWinner{
+				Player:       p,
+				WinningHand:  h.hand,
+				WinningCards: h.handCards,
+			})
 		}
 	}
 
@@ -243,64 +254,48 @@ func (m *Match) Showdown() ([]*Player, error) {
 		return nil, errors.New("zero winners")
 	}
 	if len(winners) > 1 {
-		highestCard := BACK
-		for _, p := range winners {
-			playerHighestCard := handMap[p].highestCard
-			if getPower(playerHighestCard) > getPower(highestCard) {
-				highestCard = playerHighestCard
-			}
-		}
-
-		playersWithHighestCard := []*Player{}
-		for _, p := range winners {
-			if handMap[p].highestCard == highestCard {
-				playersWithHighestCard = append(playersWithHighestCard, p)
-			}
-		}
-
-		winners = playersWithHighestCard
+		fmt.Println("TODO: handle ties")
 	}
 
 	paymentAmount := m.Pot / len(winners)
 	for _, w := range winners {
-		m.DoPotTransaction(-paymentAmount, w)
+		m.DoPotTransaction(-paymentAmount, w.Player)
 	}
 
 	return winners, nil
 }
 
-func (m *Match) calculateHand(h [2]Card) (Hand, Card) {
-	hand := [7]Card(slices.Concat(h[:], m.TableCards[:]))
-	highestCard := getHighest(hand[:]) // TODO: should come from the matching hand, not the hand as a whole
+func (m *Match) calculateHand(h [2]Card) (Hand, []Card) {
+	cards := [7]Card(slices.Concat(h[:], m.TableCards[:]))
 
-	if hasRoyalFlush(hand) {
-		return ROYAL_FLUSH, highestCard
+	if has, hand := hasRoyalFlush(cards); has {
+		return ROYAL_FLUSH, hand
 	}
-	if hasStraightFlush(hand) {
-		return STRAIGHT_FLUSH, highestCard
+	if has, hand := hasStraightFlush(cards); has {
+		return STRAIGHT_FLUSH, hand
 	}
-	if hasFourOfAKind(hand) {
-		return FOUR_OF_A_KIND, highestCard
+	if has, hand := hasFourOfAKind(cards); has {
+		return FOUR_OF_A_KIND, hand
 	}
-	if hasFullHouse(hand) {
-		return FULL_HOUSE, highestCard
+	if has, hand := hasFullHouse(cards); has {
+		return FULL_HOUSE, hand
 	}
-	if hasFlush(hand) {
-		return FLUSH, highestCard
+	if has, hand := hasFlush(cards); has {
+		return FLUSH, hand
 	}
-	if hasStraight(hand) {
-		return STRAIGHT, highestCard
+	if has, hand := hasStraight(cards); has {
+		return STRAIGHT, hand
 	}
-	if hasThreeOfAKind(hand) {
-		return THREE_OF_A_KIND, highestCard
+	if has, hand := hasThreeOfAKind(cards); has {
+		return THREE_OF_A_KIND, hand
 	}
-	if hasTwoPairs(hand) {
-		return TWO_PAIRS, highestCard
+	if has, hand := hasTwoPairs(cards); has {
+		return TWO_PAIRS, hand
 	}
-	if hasOnePair(hand) {
-		return ONE_PAIR, highestCard
+	if has, hand := hasOnePair(cards); has {
+		return ONE_PAIR, hand
 	}
-	return HIGH_CARD, highestCard
+	return HIGH_CARD, []Card{getHighest(cards[:])}
 }
 
 func (m *Match) HasMinQuorum() bool {

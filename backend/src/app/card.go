@@ -233,10 +233,17 @@ func getHighest(cards []Card) Card {
 	return highest
 }
 
-func isAllTheSamePower(cards []Card) bool {
-	return !slices.ContainsFunc(cards, func(c Card) bool {
-		return getPower(c) != getPower(cards[0])
-	})
+func getHighestWithSamePower(list [][]Card) []Card {
+	highest := list[0]
+	if len(list) > 1 {
+		for _, cardsWithSamePower := range list[1:] {
+			if getPower(cardsWithSamePower[0]) > getPower(highest[0]) {
+				highest = cardsWithSamePower
+			}
+		}
+	}
+
+	return highest
 }
 
 func sortByPower(cards []Card) []Card {
@@ -250,21 +257,33 @@ func sortByPower(cards []Card) []Card {
 	return sorted
 }
 
-func powerCounts(h []Card) map[int]int {
-	counts := map[int]int{}
+func mapByPower(h []Card) map[int][]Card {
+	result := map[int][]Card{}
 	for _, c := range h {
-		counts[getPower(c)]++
+		power := getPower(c)
+		result[power] = append(result[power], c)
 	}
 
-	return counts
+	return result
 }
 
-func hasNOfAKind(h []Card, n int) bool {
-	for _, c := range powerCounts(h) {
-		if c >= n {
-			return true
+func mapBySuit(h []Card) map[Suit][]Card {
+	result := map[Suit][]Card{}
+	for _, c := range h {
+		suit := getSuit(c)
+		result[suit] = append(result[suit], c)
+	}
+
+	return result
+}
+
+func hasNOfAKind(h []Card, n int) (bool, [][]Card) {
+	result := [][]Card{}
+	for _, c := range mapByPower(h) {
+		if len(c) >= n {
+			result = append(result, c)
 		}
 	}
 
-	return false
+	return len(result) > 0, result
 }
