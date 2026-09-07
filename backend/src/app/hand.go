@@ -48,83 +48,92 @@ var HandRank = [...]Hand{
 	ROYAL_FLUSH,
 }
 
-func hasRoyalFlush(h [7]Card) (bool, []Card) {
+func hasRoyalFlush(h [7]Card) (bool, [5]Card) {
+	matches, straightFlush := hasStraightFlush(h)
+	if !matches {
+		return false, [5]Card{}
+	}
+
 	highestIsAce := slices.Contains(
 		[]Card{CLUB_14, DIAMOND_14, HEART_14, SPADE_14},
-		getHighest(h[:]),
+		getHighest(straightFlush[:]),
 	)
 	if !highestIsAce {
-		return false, nil
+		return false, [5]Card{}
 	}
 
-	return hasStraightFlush(h)
+	return true, straightFlush
 }
 
-func hasStraightFlush(h [7]Card) (bool, []Card) {
-	matches, flush := hasFlush(h)
-	if !matches {
-		return false, nil
-	}
-	fakeHand := [7]Card{}
-	for i, c := range flush {
-		fakeHand[i] = c
-	}
-	fakeHand[5] = BACK
-	fakeHand[6] = BACK
-	if matches, straightFlush := hasStraight(fakeHand); matches {
-		return true, straightFlush
+func hasStraightFlush(h [7]Card) (bool, [5]Card) {
+	for _, cards := range mapBySuit(h[:]) {
+		if len(cards) >= 5 {
+			fakeHand := [7]Card{}
+			copy(fakeHand[:], cards)
+			for i := len(cards); i < 7; i++ {
+				fakeHand[i] = BACK
+			}
+			if matches, straightFlush := hasStraight(fakeHand); matches {
+				return true, straightFlush
+			}
+		}
 	}
 
-	return false, nil
+	return false, [5]Card{}
 }
 
-func hasFourOfAKind(h [7]Card) (bool, []Card) {
+func hasFourOfAKind(h [7]Card) (bool, [4]Card) {
 	if matches, foaks := hasNOfAKind(h[:], 4); matches {
-		return true, getHighestWithSamePower(foaks)
+		highestFoak := getHighestOfAKind(foaks)
+
+		return true, [4]Card(sortByPower(highestFoak, false))
 	}
 
-	return false, nil
+	return false, [4]Card{}
 }
 
-func hasFullHouse(h [7]Card) (bool, []Card) {
+func hasFullHouse(h [7]Card) (bool, [5]Card) {
 	matches, threeOfAKind := hasThreeOfAKind(h)
 	if !matches {
-		return false, nil
+		return false, [5]Card{}
 	}
 	matches, pairs := hasNOfAKind(h[:], 2)
 	if !matches {
-		return false, nil
+		return false, [5]Card{}
 	}
 	pairs = slices.DeleteFunc(pairs, func(pair []Card) bool {
 		for _, c := range pair {
-			if slices.Contains(threeOfAKind, c) {
+			if slices.Contains(threeOfAKind[:], c) {
 				return true
 			}
 		}
 		return false
 	})
 	if len(pairs) == 0 {
-		return false, nil
+		return false, [5]Card{}
 	}
+	highestPair := getHighestOfAKind(pairs)
+	cappedPair := [2]Card(sortByPower(highestPair, false))
+	result := slices.Concat(threeOfAKind[:], cappedPair[:])
 
-	return true, slices.Concat(threeOfAKind, getHighestWithSamePower(pairs))
+	return true, [5]Card(result)
 }
 
-func hasFlush(h [7]Card) (bool, []Card) {
+func hasFlush(h [7]Card) (bool, [5]Card) {
 	suitMap := mapBySuit(h[:])
 	for _, cards := range suitMap {
 		if len(cards) >= 5 {
-			return true, cards
+			return true, [5]Card(sortByPower(cards, false))
 		}
 	}
 
-	return false, nil
+	return false, [5]Card{}
 }
 
-func hasStraight(h [7]Card) (bool, []Card) {
+func hasStraight(h [7]Card) (bool, [5]Card) {
 	powerMap := mapByPower(h[:])
 	if len(powerMap) < 5 {
-		return false, nil
+		return false, [5]Card{}
 	}
 
 	powerSequence := []int{}
@@ -143,63 +152,56 @@ func hasStraight(h [7]Card) (bool, []Card) {
 		count++
 		if count >= 5 {
 			result := []Card{}
-			for j := i - 5; j < i; j++ {
+			for j := i - 4; j <= i; j++ {
 				power := powerSequence[j]
 				card := powerMap[power][0]
 				result = append(result, card)
 			}
 
-			return true, result
+			return true, [5]Card(result)
 		}
 	}
 
-	return false, nil
+	return false, [5]Card{}
 }
 
-func hasThreeOfAKind(h [7]Card) (bool, []Card) {
+func hasThreeOfAKind(h [7]Card) (bool, [3]Card) {
 	if matches, toaks := hasNOfAKind(h[:], 3); matches {
-		return true, getHighestWithSamePower(toaks)
+		highestToak := getHighestOfAKind(toaks)
+
+		return true, [3]Card(sortByPower(highestToak, false))
 	}
 
-	return false, nil
+	return false, [3]Card{}
 }
 
-func hasTwoPairs(h [7]Card) (bool, []Card) {
-	pairs := [][]Card{}
-	for _, cards := range mapByPower(h[:]) {
+func hasTwoPairs(h [7]Card) (bool, [4]Card) {
+	powerMap := mapByPower(h[:])
+	powers := []int{}
+	for p, cards := range powerMap {
 		if len(cards) >= 2 {
-			pairs = append(pairs, cards)
+			powers = append(powers, p)
 		}
 	}
-
-	if len(pairs) >= 2 {
-		result := []Card{}
-		for len(result) < 2 {
-			highest := getHighestWithSamePower(pairs)
-			for _, c := range highest {
-				result = append(result, c)
-			}
-			pairs = slices.DeleteFunc(pairs, func(p []Card) bool {
-				for i, c := range p {
-					if highest[i] != c {
-						return false
-					}
-				}
-
-				return true
-			})
-		}
-
-		return true, result
+	if len(powers) < 2 {
+		return false, [4]Card{}
 	}
+	slices.Sort(powers)
+	slices.Reverse(powers)
 
-	return false, nil
+	result := []Card{}
+	result = append(result, powerMap[powers[0]][:2]...)
+	result = append(result, powerMap[powers[1]][:2]...)
+
+	return true, [4]Card(result)
 }
 
-func hasOnePair(h [7]Card) (bool, []Card) {
+func hasOnePair(h [7]Card) (bool, [2]Card) {
 	if matches, pairs := hasNOfAKind(h[:], 2); matches {
-		return true, getHighestWithSamePower(pairs)
+		highestPair := getHighestOfAKind(pairs)
+
+		return true, [2]Card(sortByPower(highestPair, false))
 	}
 
-	return false, nil
+	return false, [2]Card{}
 }
