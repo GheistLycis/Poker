@@ -6,7 +6,7 @@ import { HandPipe } from '@pipes/hand/hand-pipe';
 import type { ReceiveWinners } from '@services/api/types/messages/in/ReceiveWinners';
 import { MatchService } from '@services/match/match';
 import { combineLatest, concat, filter, map, of, switchMap, timer } from 'rxjs';
-import { WINNING_FX_DUR_SEC } from '../../consts';
+import { WINNING_FX_MS } from '../../consts';
 import { CardsHand } from '../cards-hand/cards-hand';
 
 @Component({
@@ -31,7 +31,7 @@ export class Opponent {
     map(([winners, opponent]) => winners?.find(({ id }) => id === opponent.id)),
     filter((winningOpponent) => !!winningOpponent),
     switchMap((winningOpponent) =>
-      concat(of(winningOpponent), timer(WINNING_FX_DUR_SEC * 1000).pipe(map(() => undefined))),
+      concat(of(winningOpponent), timer(WINNING_FX_MS).pipe(map(() => undefined))),
     ),
   );
 }

@@ -8,6 +8,8 @@
           'bottom.px': stack.position === 'front' ? 0 : 20,
         }"
         class="absolute"
+        animate.enter="drop-in"
+        animate.leaver="slide-out"
       >
         <img
           [ngSrc]="'chips/' + stack.variant + '_chip_stack.png'"

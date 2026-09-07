@@ -6,7 +6,7 @@
       <app-card
         [variant]="card"
         [owner]="isUser() ? CARD_OWNER_ENUM.USER : CARD_OWNER_ENUM.OPPONENT"
-        [animate.enter]="isCardReveal ? 'slide-in' : 'drop-in'"
+        [animate.enter]="isCardReveal ? 'slide-in' : 'drop-slide-in'"
         [animate.leave]="isCardReveal ? 'hide' : undefined"
         [highlight]="!!card && highlight().includes(card)"
       />

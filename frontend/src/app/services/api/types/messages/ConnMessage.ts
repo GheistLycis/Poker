@@ -1,3 +1,4 @@
+import type { ReceiveLastBet } from './in/ReceiveLastBet';
 import type { ReceiveOpponentAction } from './in/ReceiveOpponentAction';
 import type { ReceiveOpponentsInfo } from './in/ReceiveOpponentsInfo';
 import type { ReceivePotAmount } from './in/ReceivePotAmount';
@@ -7,7 +8,6 @@ import type { ReceiveTableCards } from './in/ReceiveTableCards';
 import type { ReceiveUserInfo } from './in/ReceiveUserInfo';
 import type { ReceiveWinners } from './in/ReceiveWinners';
 import type { SendUserAction } from './out/SendUserAction';
-import type { SendUserEmote } from './out/SendUserEmote';
 import type { SendUserLogin } from './out/SendUserLogin';
 
 export type InConnMessage =
@@ -18,8 +18,9 @@ export type InConnMessage =
   | ReceiveWinners
   | ReceiveSeats
   | ReceiveSeatTurn
-  | ReceiveUserInfo;
+  | ReceiveUserInfo
+  | ReceiveLastBet;
 
-export type OutConnMessage = SendUserAction | SendUserEmote | SendUserLogin;
+export type OutConnMessage = SendUserAction | SendUserLogin;
 
 export type ConnMessage = InConnMessage | OutConnMessage;

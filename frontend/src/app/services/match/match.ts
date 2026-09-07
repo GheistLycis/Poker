@@ -34,6 +34,10 @@ export class MatchService {
     map((msg) => msg.amount),
     shareReplay({ bufferSize: 1, refCount: false }),
   );
+  lastBet$ = this.apiService.getMessages('match.last-bet').pipe(
+    map((msg) => msg.amount),
+    shareReplay({ bufferSize: 1, refCount: false }),
+  );
 
   isPlayerTurn(playerSeat: SeatIndex) {
     return this.seatTurn$.pipe(map((seatTurn) => seatTurn === playerSeat));

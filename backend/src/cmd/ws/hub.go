@@ -219,6 +219,22 @@ func (h *Hub) initRound() {
 	})
 	h.broadcast(tableCardsMsg)
 
+	potAmountMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: MATCH_POT_AMOUNT,
+		Payload: map[string]int{
+			"amount": h.match.Pot,
+		},
+	})
+	h.broadcast(potAmountMsg)
+
+	lastBetMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: MATCH_LAST_BET,
+		Payload: map[string]int{
+			"amount": h.match.LastBet,
+		},
+	})
+	h.broadcast(lastBetMsg)
+
 	h.lastActionIdempotencyKey = ""
 }
 
@@ -368,6 +384,14 @@ func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) erro
 		},
 	})
 	h.broadcast(potAmountMsg)
+
+	lastBetMsg := newServerMessage(ServerMessageArgs[any]{
+		Type: MATCH_LAST_BET,
+		Payload: map[string]int{
+			"amount": h.match.LastBet,
+		},
+	})
+	h.broadcast(lastBetMsg)
 
 	if h.match.HasMinQuorum() {
 		h.endTurn()

@@ -13,7 +13,7 @@ import type { SendMessage } from './types/SendMessage';
 export class ApiService {
   private API_URL = environment.apiUrl;
 
-  connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CONNECTING);
+  connState = signal<WebSocketConnState>(WebSocketConnStateEnum.CLOSE);
   private connection$ = webSocket<ConnMessage>({
     url: this.API_URL,
     openObserver: { next: () => this.connState.set(WebSocketConnStateEnum.OPEN) },
@@ -26,6 +26,7 @@ export class ApiService {
   );
 
   constructor() {
+    this.connState.set(WebSocketConnStateEnum.CONNECTING);
     this.receivedMessages$.pipe(takeUntilDestroyed()).subscribe();
   }
 

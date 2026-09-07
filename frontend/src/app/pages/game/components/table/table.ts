@@ -7,7 +7,7 @@ import { RangePipe } from '@pipes/range/range-pipe';
 import type { ReceiveWinners } from '@services/api/types/messages/in/ReceiveWinners';
 import { MatchService } from '@services/match/match';
 import { concat, map, of, switchMap, timer } from 'rxjs';
-import { WINNING_FX_DUR_SEC } from '../../consts';
+import { WINNING_FX_MS } from '../../consts';
 import { Card } from '../card/card';
 
 @Component({
@@ -26,8 +26,6 @@ export class Table {
   cards$ = this.matchService.tableCards$;
   winningCards$ = toObservable(this.roundWinners).pipe(
     map((winners) => winners?.flatMap(({ winningCards }) => winningCards)),
-    switchMap((cards) =>
-      concat(of(cards), timer(WINNING_FX_DUR_SEC * 1000).pipe(map(() => undefined))),
-    ),
+    switchMap((cards) => concat(of(cards), timer(WINNING_FX_MS).pipe(map(() => undefined)))),
   );
 }

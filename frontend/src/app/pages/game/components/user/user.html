@@ -1,4 +1,4 @@
-@let betValue = bet()[0];
+@let betValue = bet();
 @let userWon = userWon$ | async;
 
 <div class="absolute bottom-4 w-full px-[25%] text-lg font-semibold">
@@ -8,7 +8,10 @@
         <button
           (click)="sendAction(action)"
           [variant]="action === PLAYER_ACTION_ENUM.FOLD ? 'destructive' : 'ghost'"
-          [disabled]="action === PLAYER_ACTION_ENUM.BET && !betValue"
+          [disabled]="
+            (action === PLAYER_ACTION_ENUM.BET && !betValue) ||
+            (action === PLAYER_ACTION_ENUM.CALL && !roundLastBet())
+          "
           hlmBtn
           class="font-semibold"
         >
@@ -18,7 +21,6 @@
     }
   </div>
 
-  <!-- TODO: emote button -->
   <div class="flex items-end justify-center">
     @if (user(); as user) {
       <div class="flex min-w-[170px] flex-col gap-2">
@@ -49,16 +51,17 @@
 
           <div class="flex h-4 items-center justify-between">
             <label hlmLabel for="bet">
-              {{ PLAYER_ACTION_ENUM.BET | playerAction | uppercase }}</label
-            >
+              {{ PLAYER_ACTION_ENUM.BET | playerAction | uppercase }}
+            </label>
             <p class="text-sm">{{ betValue ? (betValue | currency) : '' }}</p>
           </div>
 
           <hlm-slider
-            [min]="0"
+            (valueChange)="bet.set($event[0])"
+            [min]="minBet()"
             [max]="user.score"
             [step]="0.01"
-            [(value)]="bet"
+            [value]="[bet()]"
             id="bet"
             class="w-40"
           />

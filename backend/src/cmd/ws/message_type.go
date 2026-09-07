@@ -8,12 +8,12 @@ const (
 	MATCH_SEATS       MessageType = "match.seats"
 	MATCH_TABLE_CARDS MessageType = "match.table-cards"
 	MATCH_WINNERS     MessageType = "match.winners"
+	MATCH_LAST_BET    MessageType = "match.last-bet"
 
 	OPPONENTS_ACTION MessageType = "opponents.action"
 	OPPONENTS_INFO   MessageType = "opponents.info"
 
 	USER_ACTION MessageType = "user.action"
-	USER_EMOTE  MessageType = "user.emote"
 	USER_INFO   MessageType = "user.info"
 	USER_LOGIN  MessageType = "user.login"
 
@@ -27,12 +27,12 @@ const (
 	MATCH_SEATS       MessageType = "match.seats"
 	MATCH_TABLE_CARDS MessageType = "match.table-cards"
 	MATCH_WINNERS     MessageType = "match.winners"
+	MATCH_LAST_BET    MessageType = "match.last-bet"
 
 	OPPONENTS_ACTION MessageType = "opponents.action"
 	OPPONENTS_INFO   MessageType = "opponents.info"
 
 	USER_ACTION MessageType = "user.action"
-	USER_EMOTE  MessageType = "user.emote"
 	USER_INFO   MessageType = "user.info"
 	USER_LOGIN  MessageType = "user.login"
 )

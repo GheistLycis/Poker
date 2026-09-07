@@ -1,5 +1,5 @@
 import { AsyncPipe, CurrencyPipe, UpperCasePipe } from '@angular/common';
-import { Component, inject, input, model } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import type { PlayerAction } from '@app-types/PlayerAction';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
@@ -12,7 +12,7 @@ import { HlmLabel } from '@ui/label';
 import { HlmSliderImports } from '@ui/slider';
 import { combineLatest, concat, filter, map, of, switchMap, timer } from 'rxjs';
 import { PlayerActionPipe } from '../../../../pipes/player-action/player-action-pipe';
-import { WINNING_FX_DUR_SEC } from '../../consts';
+import { WINNING_FX_MS } from '../../consts';
 import { CardsHand } from '../cards-hand/cards-hand';
 
 @Component({
@@ -49,29 +49,35 @@ export class User {
     map(([winners, user]) => winners?.find(({ id }) => id === user.id)),
     filter((winningUser) => !!winningUser),
     switchMap((winningUser) =>
-      concat(of(winningUser), timer(WINNING_FX_DUR_SEC * 1000).pipe(map(() => undefined))),
+      concat(of(winningUser), timer(WINNING_FX_MS).pipe(map(() => undefined))),
     ),
   );
-  bet = model<[number]>([0]);
+  roundLastBet = toSignal(this.matchService.lastBet$, { initialValue: 0 });
+  minBet = computed(() => this.roundLastBet() + 1);
+  bet = linkedSignal(() => this.minBet());
 
   incrementBet(amount: number, operation: '-' | '+') {
-    let final = this.bet()[0];
+    let final = this.bet();
 
     if (operation === '-') {
+      const minBet = this.minBet();
+
       final -= amount;
-      if (final < 0) final = 0;
+      if (final < minBet) final = minBet;
     } else {
-      const curr = this.user()!.score;
+      const maxBet = this.user()!.score;
 
       final += amount;
-      if (final > curr) final = curr;
+      if (final > maxBet) final = maxBet;
     }
 
-    this.bet.set([final]);
+    this.bet.set(final);
   }
 
   sendAction(action: PlayerAction) {
-    this.matchService.registerUserAction(action, this.bet()[0] || undefined);
-    this.bet.set([0]);
+    const bet = action === PlayerActionEnum.BET ? this.bet() : undefined;
+
+    this.matchService.registerUserAction(action, bet);
+    this.bet.set(0);
   }
 }
