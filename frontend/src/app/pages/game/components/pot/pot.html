@@ -7,9 +7,11 @@
           'right.px': $index * 25,
           'bottom.px': stack.position === 'front' ? 0 : 20,
         }"
+        [playOnEnter]="{ src: CHIP_DROP_SFX, end: 1 }"
         class="absolute"
         animate.enter="drop-in"
         animate.leaver="slide-out"
+        appPlay
       >
         <img
           [ngSrc]="'chips/' + stack.variant + '_chip_stack.png'"

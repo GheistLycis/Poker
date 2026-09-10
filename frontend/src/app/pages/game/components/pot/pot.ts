@@ -1,17 +1,21 @@
 import { CurrencyPipe, NgOptimizedImage, NgStyle } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Play } from '@directives/play/play';
 import { RangePipe } from '@pipes/range/range-pipe';
 import { MatchService } from '@services/match/match';
+import { CHIP_DROP_SFX } from './consts';
 import type { Stack } from './types/Stack';
 
 @Component({
   selector: 'app-pot',
-  imports: [NgOptimizedImage, CurrencyPipe, NgStyle],
+  imports: [NgOptimizedImage, CurrencyPipe, NgStyle, Play],
   providers: [RangePipe],
   templateUrl: './pot.html',
 })
 export class Pot {
+  CHIP_DROP_SFX = CHIP_DROP_SFX;
+
   private matchService = inject(MatchService);
   private rangePipe = inject(RangePipe);
 

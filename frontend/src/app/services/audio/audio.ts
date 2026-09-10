@@ -36,7 +36,7 @@ export class AudioService {
     return this.loadBuffer(url).then(() => undefined);
   }
 
-  async play(url: string) {
+  async play(url: string, start = 0, end?: number) {
     const { isEnabled, volume } = this._settings();
 
     if (!isEnabled || !volume) return;
@@ -44,11 +44,14 @@ export class AudioService {
     const buffer = await this.loadBuffer(url);
     const source = this.audioContext.createBufferSource();
     const gain = this.audioContext.createGain();
+    let duration = end ? end - start : undefined;
+
+    if (duration && duration < 0) duration = 0;
 
     source.buffer = buffer;
     gain.gain.value = this._settings().volume;
     source.connect(gain).connect(this.audioContext.destination);
-    source.start(0);
+    source.start(0, start, duration);
   }
 
   private loadBuffer(url: string) {

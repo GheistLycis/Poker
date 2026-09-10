@@ -5,15 +5,27 @@ import type { PlayerAction } from '@app-types/PlayerAction';
 import { PlayerActionEnum } from '@app-types/PlayerAction';
 import { HandPipe } from '@pipes/hand/hand-pipe';
 import type { ReceiveWinners } from '@services/api/types/messages/in/ReceiveWinners';
+import { AudioService } from '@services/audio/audio';
 import { MatchService } from '@services/match/match';
 import { UserService } from '@services/user/user';
 import { HlmButtonImports } from '@ui/button';
 import { HlmLabel } from '@ui/label';
 import { HlmSliderImports } from '@ui/slider';
-import { combineLatest, concat, filter, map, of, switchMap, timer } from 'rxjs';
+import {
+  combineLatest,
+  concat,
+  distinctUntilChanged,
+  filter,
+  map,
+  of,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 import { PlayerActionPipe } from '../../../../pipes/player-action/player-action-pipe';
 import { WINNING_FX_MS } from '../../consts';
 import { CardsHand } from '../cards-hand/cards-hand';
+import { WINNING_SFX } from './consts';
 
 @Component({
   selector: 'app-user',
@@ -36,6 +48,7 @@ export class User {
 
   private userService = inject(UserService);
   private matchService = inject(MatchService);
+  private audioService = inject(AudioService);
 
   roundWinners = input<ReceiveWinners['payload']>();
 
@@ -45,9 +58,16 @@ export class User {
     this.user$.pipe(switchMap((user) => this.matchService.isPlayerTurn(user.seatIndex))),
   );
   private roundWinners$ = toObservable(this.roundWinners);
-  userWon$ = combineLatest([this.roundWinners$, this.user$]).pipe(
-    map(([winners, user]) => winners?.find(({ id }) => id === user.id)),
+  userWon$ = combineLatest([
+    this.roundWinners$,
+    this.user$.pipe(
+      map(({ id }) => id),
+      distinctUntilChanged(),
+    ),
+  ]).pipe(
+    map(([winners, userId]) => winners?.find(({ id }) => id === userId)),
     filter((winningUser) => !!winningUser),
+    tap(() => this.audioService.play(WINNING_SFX)),
     switchMap((winningUser) =>
       concat(of(winningUser), timer(WINNING_FX_MS).pipe(map(() => undefined))),
     ),
