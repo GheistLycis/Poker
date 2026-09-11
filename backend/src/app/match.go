@@ -8,13 +8,14 @@ import (
 )
 
 type Match struct {
-	Seats      [8]*Seat
-	Pot        int
-	TableCards [5]Card
-	Deck       *map[Card]bool
-	SeatTurn   *Seat
-	LastBet    int
-	RoundSeats [8]*Seat
+	Seats              [8]*Seat
+	Pot                int
+	TableCards         [5]Card
+	Deck               *map[Card]bool
+	SeatTurn           *Seat
+	LastBet            int
+	LastSeatToCoverBet *Seat
+	RoundSeats         [8]*Seat
 }
 
 func NewMatch() *Match {
@@ -85,9 +86,8 @@ func NewMatch() *Match {
 	}
 }
 
+// TODO: missing pre-flop betting round
 func (m *Match) InitRound() {
-	m.LastBet = 0
-
 	for card := range *m.Deck {
 		(*m.Deck)[card] = false
 	}
@@ -108,6 +108,7 @@ func (m *Match) InitRound() {
 		}
 	}
 
+	var lastSeatInRound *Seat
 	for _, s := range m.RoundSeats {
 		if s == nil || s.Player == nil {
 			continue
@@ -117,9 +118,11 @@ func (m *Match) InitRound() {
 			hand[i] = m.takeFromDeck()
 		}
 		s.Player.Cards = hand
+		lastSeatInRound = s
 	}
-
 	m.SeatTurn = m.RoundSeats[0]
+	m.LastSeatToCoverBet = lastSeatInRound
+	m.LastBet = 0
 }
 
 func (m *Match) PassTurn() *Seat {
@@ -307,4 +310,17 @@ func (m *Match) HasMinQuorum() bool {
 	}
 
 	return roundPlayersCount >= 2
+}
+
+func (m *Match) ResetBettingTurn(lastBetSeat SeatIndex) {
+	idx := int(lastBetSeat)
+	n := len(m.RoundSeats)
+	for i := 1; i < n; i++ {
+		j := ((idx-i)%n + n) % n
+		seat := m.RoundSeats[j]
+		if seat != nil {
+			m.LastSeatToCoverBet = seat
+			break
+		}
+	}
 }

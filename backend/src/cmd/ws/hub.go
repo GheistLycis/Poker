@@ -62,7 +62,6 @@ func (h *Hub) dispatch(m HubMsg) {
 	}
 }
 
-// TODO: a new round needs to init whenever someone raises
 func (h *Hub) endTurn() {
 	h.turnTicker.Reset(1 * time.Hour)
 	defer h.turnTicker.Reset(TurnDuration)
@@ -71,16 +70,7 @@ func (h *Hub) endTurn() {
 		return
 	}
 
-	var lastRoundSeat *app.Seat
-	for i := len(h.match.RoundSeats) - 1; i >= 0; i-- {
-		roundSeat := h.match.RoundSeats[i]
-		if roundSeat != nil && roundSeat.Player != nil {
-			lastRoundSeat = roundSeat
-			break
-		}
-	}
-	isBettingRoundOver := lastRoundSeat == h.match.SeatTurn
-
+	isBettingRoundOver := h.match.LastSeatToCoverBet == h.match.SeatTurn
 	if isBettingRoundOver {
 		if h.match.AllTableCardsAreRevealed() {
 			h.showdown(false)
@@ -123,10 +113,17 @@ func (h *Hub) unregisterClient(addr net.Addr) {
 			}
 		}
 		h.sendSeatsInfo()
-		if h.match.SeatTurn != nil && playerSeatIdx == h.match.SeatTurn.Index {
+
+		seatTurnIsEmpty := h.match.SeatTurn != nil && playerSeatIdx == h.match.SeatTurn.Index
+		if seatTurnIsEmpty {
 			h.endTurn()
 		} else {
 			h.sendPlayersInfo(true)
+		}
+
+		lastBetSeatIsEmpty := h.match.LastSeatToCoverBet != nil && playerSeatIdx == h.match.LastSeatToCoverBet.Index
+		if lastBetSeatIsEmpty {
+			h.match.ResetBettingTurn(playerSeatIdx)
 		}
 	}
 
@@ -348,10 +345,14 @@ func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) erro
 			return errors.New("bets/raises are only allowed if greater than the last bet")
 		}
 		h.match.DoPotTransaction(value, player)
+		h.match.ResetBettingTurn(player.SeatIndex)
 		h.match.LastBet = value
 
 	case app.CALL:
 		h.match.DoPotTransaction(h.match.LastBet, player)
+
+	case app.CHECK:
+		fmt.Println("TODO: a player cannot check if it hasn't covered the last bet")
 
 	case app.FOLD:
 		for _, s := range h.match.RoundSeats {
@@ -361,8 +362,8 @@ func (h *Hub) handleAction(c *Client, action app.PlayerAction, amount *int) erro
 			}
 		}
 		player.Cards = [2]app.Card{}
-	}
 
+	}
 	opponentActionMsg := newServerMessage(ServerMessageArgs[any]{
 		Type: OPPONENTS_ACTION,
 		Payload: struct {
